@@ -1,0 +1,9 @@
+{
+  "name": "小白和小鸡毛的私房菜",
+  "short_name": "私房菜",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf7f2",
+  "theme_color": "#f8a15d",
+  "icons": []
+}
