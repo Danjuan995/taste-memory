@@ -1,6 +1,7 @@
 import { Dish, MealOrder, Restaurant, TasteMemory } from '../types/index';
 
 export const APP_NAME = '小白和小鸡毛的私房菜';
+export const APP_SUBTITLE = '记录小白和小鸡毛的私房菜日常，把每一餐都留下来。';
 
 export const mockDishes: Dish[] = [
   { id: 'd1', name: '番茄牛腩', cuisine: '家常菜', description: '酸甜开胃，周末慢炖。', imageUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&auto=format&fit=crop&q=80' },

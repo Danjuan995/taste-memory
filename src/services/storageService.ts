@@ -1,7 +1,7 @@
 import { mockDishes, mockOrders, mockRestaurants, mockTasteMemories } from '../data/mockData';
 import { Dish, MealOrder, Restaurant, TasteMemory } from '../types/index';
 
-const KEY = 'taste_memory_v1';
+const KEY = 'taste_memory_v2';
 
 interface StoreData {
   dishes: Dish[];
