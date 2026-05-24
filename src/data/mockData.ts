@@ -5,10 +5,10 @@ export const APP_SUBTITLE = '记录小白和小鸡毛的私房菜日常，把每
 
 export const mockDishes: Dish[] = [
   { id: 'd1', name: '番茄牛腩', imageUrl: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=1000&auto=format&fit=crop&q=80', cuisine: '家常菜', description: '酸甜开胃，周末慢炖。', tags: ['暖胃', '周末'], difficulty: '中等', cookTime: 60, recommended: true, frequent: true },
-  { id: 'd2', name: '椒麻鸡丝面', imageUrl: 'https://images.unsplash.com/photo-1555126634-323283e090fa?w=1000&auto=format&fit=crop&q=80', cuisine: '面食', description: '麻香清爽，夜宵友好。', tags: ['微辣', '夜宵'], difficulty: '简单', cookTime: 25, recommended: true, frequent: false },
-  { id: 'd3', name: '奶油蘑菇意面', imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=1000&auto=format&fit=crop&q=80', cuisine: '西餐', description: '奶香浓郁，适合纪念日。', tags: ['约会', '奶香'], difficulty: '简单', cookTime: 30, recommended: false, frequent: false },
-  { id: 'd4', name: '椰香芒果布丁', imageUrl: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=1000&auto=format&fit=crop&q=80', cuisine: '甜品', description: '清甜柔滑，饭后幸福感拉满。', tags: ['甜品', '夏日'], difficulty: '简单', cookTime: 20, recommended: true, frequent: false },
-  { id: 'd5', name: '菌菇豆腐汤', imageUrl: 'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=1000&auto=format&fit=crop&q=80', cuisine: '汤羹', description: '清爽鲜香，晚上喝也没负担。', tags: ['轻食', '家常'], difficulty: '简单', cookTime: 18, recommended: false, frequent: true }
+  { id: 'd2', name: '椒麻鸡丝面', imageUrl: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=1000&auto=format&fit=crop&q=80', cuisine: '面食', description: '麻香清爽，夜宵友好。', tags: ['微辣', '夜宵'], difficulty: '简单', cookTime: 25, recommended: true, frequent: false },
+  { id: 'd3', name: '奶油蘑菇意面', imageUrl: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=1000&auto=format&fit=crop&q=80', cuisine: '西餐', description: '奶香浓郁，适合纪念日。', tags: ['约会', '奶香'], difficulty: '简单', cookTime: 30, recommended: false, frequent: false },
+  { id: 'd4', name: '椰香芒果布丁', imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=1000&auto=format&fit=crop&q=80', cuisine: '甜品', description: '清甜柔滑，饭后幸福感拉满。', tags: ['甜品', '夏日'], difficulty: '简单', cookTime: 20, recommended: true, frequent: false },
+  { id: 'd5', name: '菌菇豆腐汤', imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=1000&auto=format&fit=crop&q=80', cuisine: '汤羹', description: '清爽鲜香，晚上喝也没负担。', tags: ['轻食', '家常'], difficulty: '简单', cookTime: 18, recommended: false, frequent: true }
 ];
 
 export const mockOrders: MealOrder[] = [];
