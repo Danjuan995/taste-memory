@@ -1,336 +1,83 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import * as Lucide from "lucide-react";
-import { Recipe, JournalEntry, PreOrder, RestaurantFootprint } from "./types";
-import {
-  PRESEEDED_RECIPES,
-  PRESEEDED_JOURNALS,
-  PRESEEDED_PREORDERS,
-  PRESEEDED_FOOTPRINTS
-} from "./data";
+import { useMemo, useState } from 'react';
+import { APP_NAME } from './data/mockData';
+import { aiService } from './services/aiService';
+import { storageService } from './services/storageService';
+import { CuisineType, Dish, MealPeriod, MealPlan, OrderStatus, RestaurantRecord, TasteMemory, UserName } from './types/index';
 
-// Subviews
-import HomeView from "./components/HomeView";
-import PreOrderView from "./components/PreOrderView";
-import MenuView from "./components/MenuView";
-import JournalView from "./components/JournalView";
-import FootprintMapView from "./components/FootprintMapView";
+type Tab = 'home' | 'plan' | 'menu' | 'memory' | 'footprint';
+const users: UserName[] = ['小白', '小鸡毛'];
+const periods: MealPeriod[] = ['早餐', '午餐', '晚餐', '夜宵'];
+const statuses: OrderStatus[] = ['待确认', '已确认', '已完成', '已取消'];
+const cuisines: ('全部' | CuisineType)[] = ['全部', '家常菜', '川湘菜', '粤菜', '日料', '西餐', '甜品', '轻食'];
 
 export default function App() {
-  // Initialize States with Safe LocalStorage Hydration
-  const [kitchenName, setKitchenName] = useState(() => {
-    return localStorage.getItem("tastebucks_kitchen_name") || "味蕾记忆";
-  });
-  const [isEditingKitchen, setIsEditingKitchen] = useState(false);
+  const [tab, setTab] = useState<Tab>('home');
+  const [store, setStore] = useState(storageService.load());
+  const [selectedMapId, setSelectedMapId] = useState<string | null>(store.restaurants.find(r => r.status === '已去')?.id ?? null);
+  const persist = (next: typeof store) => { setStore(next); storageService.save(next); };
 
-  const [recipes, setRecipes] = useState<Recipe[]>(() => {
-    const local = localStorage.getItem("tastebucks_recipes");
-    return local ? JSON.parse(local) : PRESEEDED_RECIPES;
-  });
+  const [keyword, setKeyword] = useState('');
+  const [filterCuisine, setFilterCuisine] = useState<'全部' | CuisineType>('全部');
+  const [dishForm, setDishForm] = useState<Omit<Dish, 'id'>>({ name: '', cuisine: '家常菜', description: '', imageUrl: '', createdBy: '小白' });
+  const [editingDishId, setEditingDishId] = useState<string | null>(null);
 
-  const [preOrders, setPreOrders] = useState<PreOrder[]>(() => {
-    const local = localStorage.getItem("tastebucks_preorders");
-    return local ? JSON.parse(local) : PRESEEDED_PREORDERS;
-  });
+  const [planForm, setPlanForm] = useState<Omit<MealPlan, 'id'>>({ date: new Date().toISOString().slice(0, 10), period: '晚餐', dishIds: [], note: '', orderedBy: '小白', status: '待确认' });
+  const [memoryForm, setMemoryForm] = useState({ dishId: '', imageUrl: '', review: '', cookedBy: '小白' as UserName });
+  const [restaurantForm, setRestaurantForm] = useState<Omit<RestaurantRecord, 'id'>>({ name: '', status: '想去', city: '上海', address: '', imageUrl: '', avgCost: 100, recommendedDishes: '', review: '', sourcePlatform: '大众点评', createdBy: '小白', recommendation: 4, lat: 31.23, lng: 121.47, visitedAt: '' });
 
-  const [journals, setJournals] = useState<JournalEntry[]>(() => {
-    const local = localStorage.getItem("tastebucks_journals");
-    return local ? JSON.parse(local) : PRESEEDED_JOURNALS;
-  });
+  const filteredDishes = useMemo(() => store.dishes.filter(d => d.name.includes(keyword) && (filterCuisine === '全部' || d.cuisine === filterCuisine)), [store.dishes, keyword, filterCuisine]);
+  const latestMemory = store.tasteMemories[0];
+  const latestVisited = store.restaurants.find(r => r.status === '已去');
+  const selectedSpot = store.restaurants.find(r => r.id === selectedMapId);
 
-  const [footprints, setFootprints] = useState<RestaurantFootprint[]>(() => {
-    const local = localStorage.getItem("tastebucks_footprints");
-    return local ? JSON.parse(local) : PRESEEDED_FOOTPRINTS;
-  });
-
-  const [activeTab, setActiveTab] = useState<"home" | "order" | "menu" | "journal" | "footprints">("home");
-
-  // Secondary states to trigger form modal openers from other views
-  const [isRecipeFormOpen, setIsRecipeFormOpen] = useState(false);
-  const [isJournalFormOpen, setIsJournalFormOpen] = useState(false);
-  const [isFootprintFormOpen, setIsFootprintFormOpen] = useState(false);
-
-  // Sync to local storage
-  useEffect(() => {
-    localStorage.setItem("tastebucks_kitchen_name", kitchenName);
-  }, [kitchenName]);
-
-  useEffect(() => {
-    localStorage.setItem("tastebucks_recipes", JSON.stringify(recipes));
-  }, [recipes]);
-
-  useEffect(() => {
-    localStorage.setItem("tastebucks_preorders", JSON.stringify(preOrders));
-  }, [preOrders]);
-
-  useEffect(() => {
-    localStorage.setItem("tastebucks_journals", JSON.stringify(journals));
-  }, [journals]);
-
-  useEffect(() => {
-    localStorage.setItem("tastebucks_footprints", JSON.stringify(footprints));
-  }, [footprints]);
-
-  // Handle addition callbacks
-  const handleAddRecipe = (newRecipe: Omit<Recipe, "id">) => {
-    const created: Recipe = {
-      ...newRecipe,
-      id: `recipe_${Date.now()}`
-    };
-    setRecipes(prev => [created, ...prev]);
+  const saveDish = () => {
+    if (!dishForm.name.trim()) return;
+    if (editingDishId) {
+      persist({ ...store, dishes: store.dishes.map(d => d.id === editingDishId ? { ...d, ...dishForm } : d) });
+      setEditingDishId(null);
+    } else {
+      persist({ ...store, dishes: [{ ...dishForm, id: crypto.randomUUID() }, ...store.dishes] });
+    }
+    setDishForm({ name: '', cuisine: '家常菜', description: '', imageUrl: '', createdBy: '小白' });
   };
 
-  const handleQuickPreOrder = (recipe: Recipe) => {
-    const created: PreOrder = {
-      id: `order_${Date.now()}`,
-      date: "2026-05-25", // Default scheduled Monday
-      mealPeriod: "午餐",
-      name: recipe.name,
-      image: recipe.image,
-      note: "快速加购，期待品尝！",
-      status: "已下单"
-    };
-    setPreOrders(prev => [created, ...prev]);
-    setActiveTab("order"); // Navigate to Reservation planner
+  const addPlan = () => {
+    if (!planForm.dishIds.length) return;
+    persist({ ...store, mealPlans: [{ ...planForm, id: crypto.randomUUID() }, ...store.mealPlans] });
   };
 
-  const handleAddPreOrder = (newOrder: Omit<PreOrder, "id">) => {
-    const created: PreOrder = {
-      ...newOrder,
-      id: `order_${Date.now()}`
-    };
-    setPreOrders(prev => [created, ...prev]);
+  const addMemory = () => {
+    const dish = store.dishes.find(d => d.id === memoryForm.dishId);
+    if (!dish) return;
+    const ai = aiService.generateTasteMemorySummary(dish.name, memoryForm.review);
+    persist({ ...store, tasteMemories: [{ id: crypto.randomUUID(), dishId: dish.id, imageUrl: memoryForm.imageUrl || dish.imageUrl, review: memoryForm.review, cookedBy: memoryForm.cookedBy, aiTitle: ai.title, aiSummary: ai.summary, aiTags: ai.tags, aiSuggestion: ai.suggestion, createdAt: new Date().toISOString() }, ...store.tasteMemories] });
   };
 
-  const handleUpdatePreOrderStatus = (id: string, s: PreOrder["status"]) => {
-    setPreOrders(prev => prev.map(o => o.id === id ? { ...o, status: s } : o));
+  const addRestaurant = () => {
+    if (!restaurantForm.name.trim()) return;
+    const ai = aiService.generateRestaurantVisitSummary(restaurantForm.name, restaurantForm.review);
+    persist({ ...store, restaurants: [{ ...restaurantForm, review: `${restaurantForm.review}｜${ai.summary}`, id: crypto.randomUUID() }, ...store.restaurants] });
   };
 
-  const handleDeletePreOrder = (id: string) => {
-    setPreOrders(prev => prev.filter(o => o.id !== id));
-  };
+  return <div className='app-shell'>
+    <header className='app-header'>
+      <div className='brand'>{APP_NAME}</div>
+      <p>每一餐，都是我们的小日子</p>
+    </header>
+    <main className='app-main'>
+      {tab === 'home' && <section className='card'><h2>今天想吃点什么？</h2><p>记录小白和小鸡毛的私房菜日常，把每一餐都留下来。</p><div className='grid2'><div><h4>今日点菜</h4>{store.mealPlans[0] ? <p>{store.mealPlans[0].date} · {store.mealPlans[0].period} · {store.mealPlans[0].orderedBy}</p> : <p>这一餐还没有安排，看看想吃什么？</p>}</div><div><h4>最近味蕾记忆</h4>{latestMemory ? <p>{latestMemory.aiTitle}</p> : <p>记录今天的味道</p>}</div><div><h4>最近探店</h4>{latestVisited ? <p>{latestVisited.name} · {latestVisited.city}</p> : <p>把好吃的地方，留在地图上</p>}</div><div><h4>快捷入口</h4><p><button onClick={() => setTab('plan')}>去点菜</button><button onClick={() => setTab('memory')}>写味蕾记忆</button></p></div></div></section>}
 
-  const handleAddJournal = (newJ: Omit<JournalEntry, "id">) => {
-    const created: JournalEntry = {
-      ...newJ,
-      id: `journal_${Date.now()}`
-    };
-    setJournals(prev => [created, ...prev]);
-    setActiveTab("journal");
-  };
+      {tab === 'plan' && <section className='card'><h2>点菜预约</h2><input type='date' value={planForm.date} onChange={e => setPlanForm({ ...planForm, date: e.target.value })} /><select value={planForm.period} onChange={e => setPlanForm({ ...planForm, period: e.target.value as MealPeriod })}>{periods.map(p => <option key={p}>{p}</option>)}</select><select multiple value={planForm.dishIds} onChange={e => setPlanForm({ ...planForm, dishIds: [...e.target.selectedOptions].map(o => o.value) })}>{store.dishes.map(d => <option value={d.id} key={d.id}>{d.name}</option>)}</select><textarea placeholder='备注（少辣、加汤等）' value={planForm.note} onChange={e => setPlanForm({ ...planForm, note: e.target.value })} /><select value={planForm.orderedBy} onChange={e => setPlanForm({ ...planForm, orderedBy: e.target.value as UserName })}>{users.map(u => <option key={u}>{u}</option>)}</select><select value={planForm.status} onChange={e => setPlanForm({ ...planForm, status: e.target.value as OrderStatus })}>{statuses.map(s => <option key={s}>{s}</option>)}</select><button onClick={addPlan}>保存点菜预约</button>{store.mealPlans.map(m => <div className='list-row' key={m.id}><b>{m.date} {m.period}</b><span>{m.orderedBy} · {m.status}</span></div>)}</section>}
 
-  const handleAddFootprint = (newFoot: Omit<RestaurantFootprint, "id">) => {
-    const created: RestaurantFootprint = {
-      ...newFoot,
-      id: `footprint_${Date.now()}`
-    };
-    setFootprints(prev => [created, ...prev]);
-    setActiveTab("footprints");
-  };
+      {tab === 'menu' && <section className='card'><h2>菜单管理</h2><input placeholder='搜索菜品' value={keyword} onChange={e => setKeyword(e.target.value)} /><select value={filterCuisine} onChange={e => setFilterCuisine(e.target.value as '全部' | CuisineType)}>{cuisines.map(c => <option key={c}>{c}</option>)}</select><input placeholder='菜名' value={dishForm.name} onChange={e => setDishForm({ ...dishForm, name: e.target.value })} /><select value={dishForm.cuisine} onChange={e => setDishForm({ ...dishForm, cuisine: e.target.value as CuisineType })}>{cuisines.slice(1).map(c => <option key={c}>{c}</option>)}</select><input placeholder='图片 URL' value={dishForm.imageUrl} onChange={e => setDishForm({ ...dishForm, imageUrl: e.target.value })} /><textarea placeholder='菜品描述' value={dishForm.description} onChange={e => setDishForm({ ...dishForm, description: e.target.value })} /><select value={dishForm.createdBy} onChange={e => setDishForm({ ...dishForm, createdBy: e.target.value as UserName })}>{users.map(u => <option key={u}>{u}</option>)}</select><button onClick={saveDish}>{editingDishId ? '更新菜品' : '新增菜品'}</button>{filteredDishes.map(d => <div className='list-row' key={d.id}><div><b>{d.name}</b><p>{d.cuisine} · {d.createdBy}</p></div><p><button onClick={() => { setEditingDishId(d.id); setDishForm({ name: d.name, cuisine: d.cuisine, description: d.description, imageUrl: d.imageUrl, createdBy: d.createdBy }); }}>编辑</button><button onClick={() => persist({ ...store, dishes: store.dishes.filter(x => x.id !== d.id) })}>删除</button></p></div>)}</section>}
 
-  const handleDeleteFootprint = (id: string) => {
-    setFootprints(prev => prev.filter(f => f.id !== id));
-  };
+      {tab === 'memory' && <section className='card'><h2>味蕾记忆</h2><select value={memoryForm.dishId} onChange={e => setMemoryForm({ ...memoryForm, dishId: e.target.value })}><option value=''>选择关联菜品</option>{store.dishes.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select><input placeholder='图片 URL' value={memoryForm.imageUrl} onChange={e => setMemoryForm({ ...memoryForm, imageUrl: e.target.value })} /><textarea placeholder='填写评价' value={memoryForm.review} onChange={e => setMemoryForm({ ...memoryForm, review: e.target.value })} /><select value={memoryForm.cookedBy} onChange={e => setMemoryForm({ ...memoryForm, cookedBy: e.target.value as UserName })}>{users.map(u => <option key={u}>{u}</option>)}</select><button onClick={addMemory}>生成并保存 AI 味蕾记录</button>{store.tasteMemories.map(m => <article className='album' key={m.id}><img src={m.imageUrl} alt={m.aiTitle} /><div><b>{m.aiTitle}</b><p>{m.aiSummary}</p><small>{m.aiTags.join(' · ')}</small><p>建议：{m.aiSuggestion}</p><em>下厨人：{m.cookedBy}</em></div></article>)}</section>}
 
-  // Nav configuration
-  const navigationItems = [
-    { id: "home", label: "首页", icon: Lucide.Home },
-    { id: "order", label: "今日点菜", icon: Lucide.CalendarDays },
-    { id: "menu", label: "私房菜单", icon: Lucide.BookOpen },
-    { id: "journal", label: "味蕾日志", icon: Lucide.Sparkles },
-    { id: "footprints", label: "美味足迹", icon: Lucide.Compass }
-  ] as const;
+      {tab === 'footprint' && <section className='card'><h2>美味足迹</h2><input placeholder='餐厅名称' value={restaurantForm.name} onChange={e => setRestaurantForm({ ...restaurantForm, name: e.target.value })} /><select value={restaurantForm.status} onChange={e => setRestaurantForm({ ...restaurantForm, status: e.target.value as '想去' | '已去' })}><option>想去</option><option>已去</option></select><input placeholder='图片 URL' value={restaurantForm.imageUrl} onChange={e => setRestaurantForm({ ...restaurantForm, imageUrl: e.target.value })} /><input placeholder='城市' value={restaurantForm.city} onChange={e => setRestaurantForm({ ...restaurantForm, city: e.target.value })} /><input placeholder='地址' value={restaurantForm.address} onChange={e => setRestaurantForm({ ...restaurantForm, address: e.target.value })} /><textarea placeholder='评价' value={restaurantForm.review} onChange={e => setRestaurantForm({ ...restaurantForm, review: e.target.value })} /><button onClick={addRestaurant}>新增探店记录</button><div className='map'>{store.restaurants.filter(r => r.status === '已去').map(r => <button key={r.id} className='pin' style={{ left: `${((r.lng - 121.40) / 0.12) * 100}%`, top: `${((31.28 - r.lat) / 0.12) * 100}%` }} onClick={() => setSelectedMapId(r.id)}>📍</button>)}</div>{selectedSpot && <div className='bottom-card'><img src={selectedSpot.imageUrl} alt={selectedSpot.name} /><div><b>{selectedSpot.name}</b><p>{selectedSpot.city} · {selectedSpot.address}</p><p>{selectedSpot.review}</p><small>推荐指数：{selectedSpot.recommendation}/5</small></div></div>}<h4>想去</h4>{store.restaurants.filter(r => r.status === '想去').map(r => <p key={r.id}>{r.name} · {r.createdBy}</p>)}<h4>已去</h4>{store.restaurants.filter(r => r.status === '已去').map(r => <p key={r.id}>{r.name} · {r.createdBy}</p>)}</section>}
+    </main>
 
-  return (
-    <div className="min-h-screen bg-cream text-brand-dark flex flex-col font-sans" id="tastebuds-app-root">
-      {/* Dynamic Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-cozy-beige sticky top-0 z-40 px-4 py-3 shadow-custom-sm">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Elegant glowing chef stamp badge */}
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-orange to-amber-500 flex items-center justify-center text-white shadow-custom-sm font-bold font-display" id="header-brand-logo">
-              <Lucide.UtensilsCrossed className="w-5 h-5" />
-            </div>
-
-            {/* Editable Kitchen Title Section to match custom requirements */}
-            <div className="flex items-center gap-2">
-              {isEditingKitchen ? (
-                <input
-                  type="text"
-                  maxLength={18}
-                  value={kitchenName}
-                  onChange={(e) => setKitchenName(e.target.value)}
-                  onBlur={() => setIsEditingKitchen(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") setIsEditingKitchen(false);
-                  }}
-                  autoFocus
-                  className="text-lg font-display font-bold text-brand-dark bg-cream px-2.5 py-0.5 rounded-lg border border-brand-orange/40 focus:outline-none"
-                />
-              ) : (
-                <div className="flex items-center gap-1.5 group">
-                  <h1 className="text-xl font-display font-medium text-brand-dark tracking-tight">
-                    {kitchenName}
-                  </h1>
-                  <button
-                    onClick={() => setIsEditingKitchen(true)}
-                    className="opacity-0 group-hover:opacity-100 text-brand-brown hover:text-brand-orange p-1 transition-opacity"
-                    title="重命名主页"
-                  >
-                    <Lucide.PencilLine className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* User profile view */}
-          <div className="flex items-center gap-3">
-            <span className="hidden md:inline-block text-[11px] font-mono text-brand-brown/60 uppercase tracking-wide bg-cozy-beige/40 px-2 py-0.5 rounded-md">
-              私房主厨
-            </span>
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
-              alt="Avatar Profile"
-              className="w-8 h-8 rounded-full object-cover border border-cozy-beige shadow-xs shrink-0"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-        </div>
-      </header>
-
-      {/* Main layout container support side bar and main page */}
-      <div className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col md:flex-row gap-6 pb-24 md:pb-6">
-        
-        {/* Desktop Sidebar menu */}
-        <aside className="hidden md:block w-52 shrink-0 space-y-2">
-          <div className="bg-white/50 border border-cozy-beige rounded-2xl p-3 shadow-custom-sm">
-            <div className="text-[10px] uppercase font-bold tracking-wider text-brand-brown/40 px-3.5 py-2 mb-1.5">
-              手账目录
-            </div>
-            <nav className="space-y-1">
-              {navigationItems.map((item) => {
-                const isActive = activeTab === item.id;
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setIsRecipeFormOpen(false);
-                      setIsJournalFormOpen(false);
-                      setIsFootprintFormOpen(false);
-                    }}
-                    className={`nav-button-tab w-full font-sans flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all ${
-                      isActive
-                        ? "bg-brand-brown text-white shadow-custom-sm"
-                        : "text-brand-dark/75 hover:bg-cozy-beige/40 hover:text-brand-dark"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </aside>
-
-        {/* Dynamic Screens routing content container */}
-        <main className="flex-1 min-w-0">
-          <AnimatePresence mode="wait">
-            {activeTab === "home" && (
-              <HomeView
-                key="home"
-                kitchenName={kitchenName}
-                preOrders={preOrders}
-                recipes={recipes}
-                journals={journals}
-                footprints={footprints}
-                onNavigate={setActiveTab}
-                onOpenAddRecipe={() => {
-                  setActiveTab("menu");
-                  setIsRecipeFormOpen(true);
-                }}
-                onOpenAddJournal={() => {
-                  setActiveTab("journal");
-                  setIsJournalFormOpen(true);
-                }}
-                onOpenAddFootprint={() => {
-                  setActiveTab("footprints");
-                  setIsFootprintFormOpen(true);
-                }}
-              />
-            )}
-
-            {activeTab === "order" && (
-              <PreOrderView
-                key="order"
-                preOrders={preOrders}
-                recipes={recipes}
-                onAddPreOrder={handleAddPreOrder}
-                onUpdateStatus={handleUpdatePreOrderStatus}
-                onDeletePreOrder={handleDeletePreOrder}
-              />
-            )}
-
-            {activeTab === "menu" && (
-              <MenuView
-                key="menu"
-                recipes={recipes}
-                onAddRecipe={handleAddRecipe}
-                onQuickPreOrder={handleQuickPreOrder}
-                isFormInitiallyOpen={isRecipeFormOpen}
-              />
-            )}
-
-            {activeTab === "journal" && (
-              <JournalView
-                key="journal"
-                journals={journals}
-                recipes={recipes}
-                onAddJournal={handleAddJournal}
-                isFormInitiallyOpen={isJournalFormOpen}
-              />
-            )}
-
-            {activeTab === "footprints" && (
-              <FootprintMapView
-                key="footprints"
-                footprints={footprints}
-                onAddFootprint={handleAddFootprint}
-                onDeleteFootprint={handleDeleteFootprint}
-                isFormInitiallyOpen={isFootprintFormOpen}
-              />
-            )}
-          </AnimatePresence>
-        </main>
-      </div>
-
-      {/* Floating Bottom Nav for Mobile layout screen viewports */}
-      <nav className="md:hidden fixed bottom-4 inset-x-4 bg-white/90 backdrop-blur-md border border-cozy-beige rounded-2xl p-2.5 shadow-custom-lg z-40 flex justify-between items-center px-4" id="mobile-nav-bar">
-        {navigationItems.map((item) => {
-          const isActive = activeTab === item.id;
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-                setIsRecipeFormOpen(false);
-                setIsJournalFormOpen(false);
-                setIsFootprintFormOpen(false);
-              }}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all cursor-pointer ${
-                isActive ? "text-brand-orange scale-102" : "text-brand-dark/50"
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span className="text-[9px] mt-1 font-semibold tracking-wider">{item.label}</span>
-            </button>
-          );
-        })}
-      </nav>
-    </div>
-  );
+    <nav className='tabbar'>{[
+      ['home', '首页'], ['plan', '点菜'], ['menu', '菜单'], ['memory', '味蕾记忆'], ['footprint', '美味足迹']
+    ].map(([id, label]) => <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id as Tab)}>{label}</button>)}</nav>
+  </div>;
 }
