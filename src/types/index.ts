@@ -53,3 +53,6 @@ export interface Restaurant {
   lat: number;
   lng: number;
 }
+
+
+export type AppTab = 'home' | 'meal' | 'menu' | 'memory' | 'footprint';

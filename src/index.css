@@ -10,3 +10,6 @@ button{background:#f8a15d;color:#fff;border:none}
 .card div{margin-top:10px;padding-top:10px;border-top:1px solid #f0e5d7}
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px;background:rgba(255,251,245,.95);border-top:1px solid #eadcc8}
 .nav button{margin:0;background:#fff3e7;color:#8a6344;padding:8px 4px;font-size:12px}.nav button.active{background:#f8a15d;color:#fff}
+
+.card h2{margin:0 0 8px;font-size:20px;color:#4f311d}
+.card p{margin:6px 0;color:#6d4a31}

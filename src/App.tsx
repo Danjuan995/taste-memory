@@ -33,27 +33,66 @@ export default function App() {
 
   const addDish = (dish: Omit<Dish, 'id'>) => persist({ ...store, dishes: [{ ...dish, id: crypto.randomUUID() }, ...store.dishes] });
   const deleteDish = (id: string) => persist({ ...store, dishes: store.dishes.filter((d) => d.id !== id) });
-  const updateDish = (id: string, patch: Partial<Dish>) => persist({ ...store, dishes: store.dishes.map((d) => d.id === id ? { ...d, ...patch } : d) });
+  const updateDish = (id: string, patch: Partial<Dish>) => persist({ ...store, dishes: store.dishes.map((d) => (d.id === id ? { ...d, ...patch } : d)) });
 
   const addOrder = (order: Omit<MealOrder, 'id'>) => persist({ ...store, orders: [{ ...order, id: crypto.randomUUID() }, ...store.orders] });
-  const updateOrderStatus = (id: string, status: OrderStatus) => persist({ ...store, orders: store.orders.map((o) => o.id === id ? { ...o, status } : o) });
+  const updateOrderStatus = (id: string, status: OrderStatus) => persist({ ...store, orders: store.orders.map((o) => (o.id === id ? { ...o, status } : o)) });
 
   const addMemory = (memory: Omit<TasteMemory, 'id' | 'createdAt'>) => persist({ ...store, memories: [{ ...memory, id: crypto.randomUUID(), createdAt: new Date().toISOString() }, ...store.memories] });
   const addRestaurant = (restaurant: Omit<Restaurant, 'id'>) => persist({ ...store, restaurants: [{ ...restaurant, id: crypto.randomUUID() }, ...store.restaurants] });
 
   return <div className='app'>
-    <header className='header'><h1>{APP_NAME}</h1><p>记录属于我们的私房菜生活</p></header>
+    <header className='header'>
+      <h1>{APP_NAME}</h1>
+      <p>记录小白和小鸡毛的私房菜日常，把每一餐都留下来。</p>
+    </header>
+
     <main className='main'>
-      {tab === 'home' && <section className='card'><h2>今天吃什么？</h2><p>小白和小鸡毛今天想吃点什么？</p><p>已记录菜品 {store.dishes.length} 道，味蕾记忆 {store.memories.length} 条。</p></section>}
-      {tab === 'menu' && <section className='card'><h2>菜单管理</h2><input placeholder='搜索菜品' value={keyword} onChange={e => setKeyword(e.target.value)} /><select value={filterCuisine} onChange={e => setFilterCuisine(e.target.value as any)}>{cuisines.map(c => <option key={c}>{c}</option>)}</select><button onClick={() => addDish({ name: '新菜品', cuisine: '家常菜', description: '待补充描述', imageUrl: '' })}>新增菜品</button>{filteredDishes.map(d => <div key={d.id}><b>{d.name}</b> · {d.cuisine}<button onClick={() => updateDish(d.id, { name: d.name + '✨' })}>编辑</button><button onClick={() => deleteDish(d.id)}>删除</button></div>)}</section>}
-      {tab === 'meal' && <section className='card'><h2>点菜预约</h2><button onClick={() => addOrder({ date: new Date().toISOString().slice(0,10), period: '晚餐', dishIds: store.dishes.slice(0,1).map(d => d.id), note: '这一餐还没有安排，先来一份试试', orderedBy: '小白', status: '待确认' })}>新增预约</button>{store.orders.map(o => <div key={o.id}>{o.date} {o.period} · {o.orderedBy} · {o.status}<button onClick={() => updateOrderStatus(o.id, '已确认')}>设为已确认</button></div>)}</section>}
-      {tab === 'memory' && <section className='card'><h2>味蕾记忆</h2><button onClick={() => {
-        const dish = store.dishes[0]; if (!dish) return;
-        const ai = aiService.summarizeTaste('今天这道菜很香很暖', dish.name);
-        addMemory({ imageUrl: dish.imageUrl, review: '今天这道菜，值得再做一次', dishId: dish.id, chef: '小鸡毛', aiTitle: ai.title, aiSummary: ai.summary, aiTags: ai.tags, aiSuggestion: ai.suggestion });
-      }}>生成一条 AI 味蕾记录</button>{store.memories.map(m => <div key={m.id}><b>{m.aiTitle}</b><p>{m.aiSummary}</p><small>{m.aiTags.join(' / ')}</small></div>)}</section>}
-      {tab === 'footprint' && <section className='card'><h2>美味足迹</h2><button onClick={() => addRestaurant({ name: '想去的小馆子', status: '想去', city: '上海', address: '静安区', imageUrl: '', avgCost: 120, recommendedDishes: '招牌面', review: '先收藏，周末去', sourcePlatform: '美团', lat: 31.23, lng: 121.47 })}>新增餐厅</button>{store.restaurants.map(r => <div key={r.id}><b>{r.name}</b> · {r.city} · {r.status}<p>{r.address}</p></div>)}</section>}
+      {tab === 'home' && <section className='card'>
+        <h2>今天想吃点什么？</h2>
+        <p>记录小白和小鸡毛的私房菜日常，把每一餐都留下来。</p>
+        <div><b>今日点菜</b><p>待确认 {store.orders.filter((o) => o.status === '待确认').length} 条，已确认 {store.orders.filter((o) => o.status === '已确认').length} 条。</p></div>
+        <div><b>最近味蕾记忆</b><p>已积累 {store.memories.length} 条，下厨灵感持续更新。</p></div>
+        <div><b>最近探店</b><p>收藏与探店共 {store.restaurants.length} 家餐厅。</p></div>
+        <div><b>快捷入口</b><p>可直达点菜、菜单、味蕾记忆和美味足迹。</p></div>
+      </section>}
+
+      {tab === 'meal' && <section className='card'>
+        <h2>点菜预约功能</h2>
+        <p>提前安排三餐，减少“今天吃什么”的烦恼。</p>
+        <button onClick={() => addOrder({ date: new Date().toISOString().slice(0, 10), period: '晚餐', dishIds: store.dishes.slice(0, 1).map((d) => d.id), note: '今晚安排一道招牌菜', orderedBy: '小白', status: '待确认' })}>新增预约</button>
+        {store.orders.map((o) => <div key={o.id}>{o.date} {o.period} · {o.orderedBy} · {o.status}<button onClick={() => updateOrderStatus(o.id, '已确认')}>设为已确认</button></div>)}
+      </section>}
+
+      {tab === 'menu' && <section className='card'>
+        <h2>菜品管理列表</h2>
+        <p>维护私房菜单，沉淀每道拿手菜。</p>
+        <input placeholder='搜索菜品' value={keyword} onChange={(e) => setKeyword(e.target.value)} />
+        <select value={filterCuisine} onChange={(e) => setFilterCuisine(e.target.value as '全部' | CuisineType)}>{cuisines.map((c) => <option key={c}>{c}</option>)}</select>
+        <button onClick={() => addDish({ name: '新菜品', cuisine: '家常菜', description: '待补充描述', imageUrl: '' })}>新增菜品</button>
+        {filteredDishes.map((d) => <div key={d.id}><b>{d.name}</b> · {d.cuisine}<p>{d.description}</p><button onClick={() => updateDish(d.id, { name: `${d.name}✨` })}>编辑</button><button onClick={() => deleteDish(d.id)}>删除</button></div>)}
+      </section>}
+
+      {tab === 'memory' && <section className='card'>
+        <h2>下厨记录与 AI 总结（Mock）</h2>
+        <p>保留下厨瞬间，并生成 mock AI 味蕾总结。</p>
+        <button onClick={() => {
+          const dish = store.dishes[0];
+          if (!dish) return;
+          const ai = aiService.summarizeTaste('今天这道菜很香很暖，家常味让人放松。', dish.name);
+          addMemory({ imageUrl: dish.imageUrl, review: '今天这道菜，值得再做一次', dishId: dish.id, chef: '小鸡毛', aiTitle: ai.title, aiSummary: ai.summary, aiTags: ai.tags, aiSuggestion: ai.suggestion });
+        }}>生成一条 AI 味蕾记录</button>
+        {store.memories.map((m) => <div key={m.id}><b>{m.aiTitle}</b><p>{m.aiSummary}</p><small>{m.aiTags.join(' / ')}</small></div>)}
+      </section>}
+
+      {tab === 'footprint' && <section className='card'>
+        <h2>餐厅探店与地图式足迹</h2>
+        <p>记录想去与已去餐厅，保留每次探店坐标。</p>
+        <button onClick={() => addRestaurant({ name: '想去的小馆子', status: '想去', city: '上海', address: '静安区', imageUrl: '', avgCost: 120, recommendedDishes: '招牌面', review: '先收藏，周末去', sourcePlatform: '美团', lat: 31.23, lng: 121.47 })}>新增餐厅</button>
+        {store.restaurants.map((r) => <div key={r.id}><b>{r.name}</b> · {r.city} · {r.status}<p>{r.address}</p><small>坐标：{r.lat}, {r.lng}</small></div>)}
+      </section>}
     </main>
-    <footer className='nav'>{nav.map(n => <button key={n.id} className={tab===n.id ? 'active' : ''} onClick={() => setTab(n.id)}>{n.label}</button>)}</footer>
+
+    <footer className='nav'>{nav.map((n) => <button key={n.id} className={tab === n.id ? 'active' : ''} onClick={() => setTab(n.id)}>{n.label}</button>)}</footer>
   </div>;
 }
