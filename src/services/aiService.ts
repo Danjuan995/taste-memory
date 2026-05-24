@@ -1,11 +1,11 @@
 export const aiService = {
   summarizeTaste(review: string, dishName: string) {
-    const digest = review.slice(0, 30) || '这顿饭很有家的温度';
+    const base = review || '这次发挥稳定，香气和口感都很舒服。';
     return {
-      title: `今天这道${dishName}，值得再做一次`,
-      summary: `Mock AI 味蕾总结：${digest}。整体口感层次不错，记录下了你们今天的小确幸。`,
-      tags: ['家常治愈', '口感平衡', '值得复刻'],
-      suggestion: '下次可以把咸度降低一点，再增加一点香草或葱花提香。'
+      title: `周日晚上的${dishName}，暖得刚刚好`,
+      summary: `这次${dishName}整体表现很稳，${base.slice(0, 30)}。这道菜很适合保留在周末晚餐清单里。`,
+      tags: ['酸甜', '浓郁', '家常', '暖胃'],
+      suggestion: '下次可以减少一点炖煮时间，让口感更有层次。'
     };
   }
 };

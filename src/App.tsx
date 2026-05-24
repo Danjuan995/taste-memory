@@ -1,98 +1,54 @@
 import { useMemo, useState } from 'react';
-import { APP_NAME } from './data/mockData';
+import { APP_NAME, APP_SUBTITLE } from './data/mockData';
 import { aiService } from './services/aiService';
 import { storageService } from './services/storageService';
-import { CuisineType, Dish, MealOrder, OrderStatus, Restaurant, TasteMemory } from './types/index';
+import { AppTab, CuisineType, MealPeriod, OrderStatus } from './types/index';
 
-type Tab = 'home' | 'meal' | 'menu' | 'memory' | 'footprint';
-
-const nav: { id: Tab; label: string }[] = [
-  { id: 'home', label: '首页' },
-  { id: 'meal', label: '点菜' },
-  { id: 'menu', label: '菜单' },
-  { id: 'memory', label: '味蕾记忆' },
-  { id: 'footprint', label: '美味足迹' }
-];
-
-const cuisines: ('全部' | CuisineType)[] = ['全部', '家常菜', '川湘菜', '粤菜', '日料', '西餐', '甜品', '轻食'];
+const nav: { id: AppTab; label: string }[] = [{ id: 'home', label: '首页' }, { id: 'meal', label: '点菜' }, { id: 'menu', label: '菜单' }, { id: 'memory', label: '味蕾记忆' }, { id: 'footprint', label: '美味足迹' }];
+const periods: MealPeriod[] = ['早餐', '午餐', '晚餐', '夜宵'];
+const cuisines: ('全部' | CuisineType)[] = ['全部', '家常菜', '川湘菜', '江浙菜', '粤菜', '西餐', '面食', '甜品', '汤羹', '早餐', '夜宵'];
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('home');
-  const [store, setStore] = useState(storageService.load());
-  const [keyword, setKeyword] = useState('');
-  const [filterCuisine, setFilterCuisine] = useState<'全部' | CuisineType>('全部');
+  const [tab, setTab] = useState<AppTab>('home');
+  const [store, setStore] = useState(storageService.loadAll());
+  const [search, setSearch] = useState(''); const [cuisine, setCuisine] = useState<'全部' | CuisineType>('全部');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [overlay, setOverlay] = useState<'' | 'order' | 'dish' | 'memory' | 'restaurant'>('');
+  const [editingDish, setEditingDish] = useState<string>(''); const [mapPick, setMapPick] = useState<string>('');
 
-  const persist = (next: typeof store) => {
-    setStore(next);
-    storageService.save(next);
-  };
+  const persist = (next: typeof store) => { setStore(next); storageService.saveAll(next); };
+  const todayOrders = store.orders.filter((o) => o.date === date);
+  const dishes = useMemo(() => store.dishes.filter((d) => d.name.includes(search) && (cuisine === '全部' || d.cuisine === cuisine)), [store.dishes, search, cuisine]);
 
-  const filteredDishes = useMemo(() => store.dishes.filter((d) =>
-    d.name.includes(keyword) && (filterCuisine === '全部' || d.cuisine === filterCuisine)
-  ), [store.dishes, keyword, filterCuisine]);
+  return <div className='app'><header className='header'><h1>{APP_NAME}</h1><p>{APP_SUBTITLE}</p></header><main className='main'>
+    {tab === 'home' && <section>
+      <div className='hero card'><h2>今天想吃点什么？</h2><p>小白和小鸡毛的私房菜日常，把每一餐都认真留下来。</p></div>
+      <div className='card'><h3>今日点菜</h3>{periods.map((p) => { const o = todayOrders.find((x) => x.period === p); return <div key={p} className='row'><b>{p}</b>{o ? <span>{o.dishIds.map((id) => store.dishes.find((d) => d.id === id)?.name).filter(Boolean).join('、') || '未选菜'} · {o.orderedBy} · {o.status}</span> : <em>这一餐还没有安排，看看想吃什么？</em>}</div>; })}</div>
+      <div className='grid4 card'>{[['预约点菜', 'meal'], ['新增菜品', 'menu'], ['记录下厨', 'memory'], ['记录探店', 'footprint']].map(([label, t]) => <button key={label} className='soft' onClick={() => setTab(t as AppTab)}>{label}</button>)}</div>
+      <div className='card'><h3>最近味蕾记忆</h3><div className='grid2'>{store.memories.slice(0, 3).map((m) => <article key={m.id} className='photo'><img src={m.imageUrl || 'https://picsum.photos/400/300'} /><p>{m.aiTitle}</p><small>{m.createdAt.slice(0, 10)} · {m.aiTags.join(' / ')}</small></article>)}</div></div>
+      <div className='card'><h3>最近探店</h3><div className='grid2'>{store.restaurants.slice(0, 2).map((r) => <article key={r.id} className='photo'><img src={r.imageUrl || 'https://picsum.photos/401/300'} /><p>{r.name}</p><small>{r.city} · 推荐 {r.score}</small></article>)}</div></div>
+    </section>}
 
-  const addDish = (dish: Omit<Dish, 'id'>) => persist({ ...store, dishes: [{ ...dish, id: crypto.randomUUID() }, ...store.dishes] });
-  const deleteDish = (id: string) => persist({ ...store, dishes: store.dishes.filter((d) => d.id !== id) });
-  const updateDish = (id: string, patch: Partial<Dish>) => persist({ ...store, dishes: store.dishes.map((d) => (d.id === id ? { ...d, ...patch } : d)) });
+    {tab === 'meal' && <section className='card'><div className='toolbar'><input type='date' value={date} onChange={(e) => setDate(e.target.value)} /><button onClick={() => setOverlay('order')}>+ 新增点菜</button></div>{periods.map((p) => <div key={p} className='row'><b>{p}</b><div>{todayOrders.filter((o) => o.period === p).map((o) => <p key={o.id}>{o.dishIds.map((id) => store.dishes.find((d) => d.id === id)?.name).join('、')} · {o.orderedBy} · <select value={o.status} onChange={(e) => persist(storageService.updateOrder(store, o.id, { status: e.target.value as OrderStatus }))}><option>待确认</option><option>已确认</option><option>已完成</option><option>已取消</option></select></p>)}</div></div>)}</section>}
 
-  const addOrder = (order: Omit<MealOrder, 'id'>) => persist({ ...store, orders: [{ ...order, id: crypto.randomUUID() }, ...store.orders] });
-  const updateOrderStatus = (id: string, status: OrderStatus) => persist({ ...store, orders: store.orders.map((o) => (o.id === id ? { ...o, status } : o)) });
+    {tab === 'menu' && <section><div className='card toolbar'><input placeholder='搜索菜名' value={search} onChange={(e) => setSearch(e.target.value)} /><button onClick={() => { setEditingDish(''); setOverlay('dish'); }}>+ 新增</button></div><div className='chips'>{cuisines.map((c) => <button key={c} className={cuisine === c ? 'activeChip' : ''} onClick={() => setCuisine(c)}>{c}</button>)}</div><div className='grid2'>{dishes.map((d) => <article key={d.id} className='photo'><img src={d.imageUrl || 'https://picsum.photos/402/300'} /><p>{d.name}</p><small>{d.tags.join(' / ')} · {d.cookTime}分钟</small><div className='actions'><button onClick={() => { setEditingDish(d.id); setOverlay('dish'); }}>编辑</button><button onClick={() => confirm('确认删除菜品？') && persist(storageService.deleteDish(store, d.id))}>删除</button></div></article>)}</div></section>}
 
-  const addMemory = (memory: Omit<TasteMemory, 'id' | 'createdAt'>) => persist({ ...store, memories: [{ ...memory, id: crypto.randomUUID(), createdAt: new Date().toISOString() }, ...store.memories] });
-  const addRestaurant = (restaurant: Omit<Restaurant, 'id'>) => persist({ ...store, restaurants: [{ ...restaurant, id: crypto.randomUUID() }, ...store.restaurants] });
+    {tab === 'memory' && <section><div className='card toolbar'><h3>记录今天的味道</h3><button onClick={() => setOverlay('memory')}>+ 新增记忆</button></div><div className='grid2'>{store.memories.length === 0 ? <div className='empty card'>还没有留下味蕾记忆，记录今天做的第一道菜吧。</div> : store.memories.map((m) => <article key={m.id} className='photo'><img src={m.imageUrl || 'https://picsum.photos/403/300'} /><p>{m.aiTitle}</p><small>{m.createdAt.slice(0, 10)} · ⭐{m.rating}</small></article>)}</div></section>}
 
-  return <div className='app'>
-    <header className='header'>
-      <h1>{APP_NAME}</h1>
-      <p>记录小白和小鸡毛的私房菜日常，把每一餐都留下来。</p>
-    </header>
+    {tab === 'footprint' && <section><div className='card toolbar'><button onClick={() => setOverlay('restaurant')}>+ 新增餐厅</button></div><div className='card map'>{store.restaurants.filter((r) => r.status === '已去').map((r, i) => <button key={r.id} className='pin' style={{ left: `${20 + i * 28}%`, top: `${35 + (i % 2) * 20}%` }} onClick={() => setMapPick(r.id)}><img src={r.imageUrl} /></button>)}</div>{mapPick && <div className='card'><h3>{store.restaurants.find((r) => r.id === mapPick)?.name}</h3><p>{store.restaurants.find((r) => r.id === mapPick)?.city} · {store.restaurants.find((r) => r.id === mapPick)?.address}</p></div>}</section>}
+  </main>
+  <footer className='nav'>{nav.map((n) => <button key={n.id} className={tab === n.id ? 'active' : ''} onClick={() => setTab(n.id)}>{n.label}</button>)}</footer>
 
-    <main className='main'>
-      {tab === 'home' && <section className='card'>
-        <h2>今天想吃点什么？</h2>
-        <p>记录小白和小鸡毛的私房菜日常，把每一餐都留下来。</p>
-        <div><b>今日点菜</b><p>待确认 {store.orders.filter((o) => o.status === '待确认').length} 条，已确认 {store.orders.filter((o) => o.status === '已确认').length} 条。</p></div>
-        <div><b>最近味蕾记忆</b><p>已积累 {store.memories.length} 条，下厨灵感持续更新。</p></div>
-        <div><b>最近探店</b><p>收藏与探店共 {store.restaurants.length} 家餐厅。</p></div>
-        <div><b>快捷入口</b><p>可直达点菜、菜单、味蕾记忆和美味足迹。</p></div>
-      </section>}
-
-      {tab === 'meal' && <section className='card'>
-        <h2>点菜预约功能</h2>
-        <p>提前安排三餐，减少“今天吃什么”的烦恼。</p>
-        <button onClick={() => addOrder({ date: new Date().toISOString().slice(0, 10), period: '晚餐', dishIds: store.dishes.slice(0, 1).map((d) => d.id), note: '今晚安排一道招牌菜', orderedBy: '小白', status: '待确认' })}>新增预约</button>
-        {store.orders.map((o) => <div key={o.id}>{o.date} {o.period} · {o.orderedBy} · {o.status}<button onClick={() => updateOrderStatus(o.id, '已确认')}>设为已确认</button></div>)}
-      </section>}
-
-      {tab === 'menu' && <section className='card'>
-        <h2>菜品管理列表</h2>
-        <p>维护私房菜单，沉淀每道拿手菜。</p>
-        <input placeholder='搜索菜品' value={keyword} onChange={(e) => setKeyword(e.target.value)} />
-        <select value={filterCuisine} onChange={(e) => setFilterCuisine(e.target.value as '全部' | CuisineType)}>{cuisines.map((c) => <option key={c}>{c}</option>)}</select>
-        <button onClick={() => addDish({ name: '新菜品', cuisine: '家常菜', description: '待补充描述', imageUrl: '' })}>新增菜品</button>
-        {filteredDishes.map((d) => <div key={d.id}><b>{d.name}</b> · {d.cuisine}<p>{d.description}</p><button onClick={() => updateDish(d.id, { name: `${d.name}✨` })}>编辑</button><button onClick={() => deleteDish(d.id)}>删除</button></div>)}
-      </section>}
-
-      {tab === 'memory' && <section className='card'>
-        <h2>下厨记录与 AI 总结（Mock）</h2>
-        <p>保留下厨瞬间，并生成 mock AI 味蕾总结。</p>
-        <button onClick={() => {
-          const dish = store.dishes[0];
-          if (!dish) return;
-          const ai = aiService.summarizeTaste('今天这道菜很香很暖，家常味让人放松。', dish.name);
-          addMemory({ imageUrl: dish.imageUrl, review: '今天这道菜，值得再做一次', dishId: dish.id, chef: '小鸡毛', aiTitle: ai.title, aiSummary: ai.summary, aiTags: ai.tags, aiSuggestion: ai.suggestion });
-        }}>生成一条 AI 味蕾记录</button>
-        {store.memories.map((m) => <div key={m.id}><b>{m.aiTitle}</b><p>{m.aiSummary}</p><small>{m.aiTags.join(' / ')}</small></div>)}
-      </section>}
-
-      {tab === 'footprint' && <section className='card'>
-        <h2>餐厅探店与地图式足迹</h2>
-        <p>记录想去与已去餐厅，保留每次探店坐标。</p>
-        <button onClick={() => addRestaurant({ name: '想去的小馆子', status: '想去', city: '上海', address: '静安区', imageUrl: '', avgCost: 120, recommendedDishes: '招牌面', review: '先收藏，周末去', sourcePlatform: '美团', lat: 31.23, lng: 121.47 })}>新增餐厅</button>
-        {store.restaurants.map((r) => <div key={r.id}><b>{r.name}</b> · {r.city} · {r.status}<p>{r.address}</p><small>坐标：{r.lat}, {r.lng}</small></div>)}
-      </section>}
-    </main>
-
-    <footer className='nav'>{nav.map((n) => <button key={n.id} className={tab === n.id ? 'active' : ''} onClick={() => setTab(n.id)}>{n.label}</button>)}</footer>
+  {overlay === 'order' && <Sheet title='新增点菜预约' close={() => setOverlay('')}><QuickOrder onSave={(data) => { persist(storageService.addOrder(store, data)); setOverlay(''); }} dishes={store.dishes} date={date} /></Sheet>}
+  {overlay === 'dish' && <Sheet title={editingDish ? '编辑菜品' : '新增菜品'} close={() => setOverlay('')}><DishForm dish={store.dishes.find((d) => d.id === editingDish)} onSave={(data) => { persist(editingDish ? storageService.updateDish(store, editingDish, data) : storageService.addDish(store, data)); setOverlay(''); }} /></Sheet>}
+  {overlay === 'memory' && <Sheet title='新增味蕾记忆' close={() => setOverlay('')}><MemoryForm dishes={store.dishes} onSave={(v) => { const ai = aiService.summarizeTaste(v.review, v.dishName); persist(storageService.addMemory(store, { ...v, ...ai })); setOverlay(''); }} /></Sheet>}
+  {overlay === 'restaurant' && <Sheet title='新增餐厅记录' close={() => setOverlay('')}><RestaurantForm onSave={(v) => { persist(storageService.addRestaurant(store, v)); setOverlay(''); }} /></Sheet>}
   </div>;
 }
+
+function Sheet({ title, close, children }: any) { return <div className='sheetWrap' onClick={close}><div className='sheet card' onClick={(e) => e.stopPropagation()}><h3>{title}</h3>{children}</div></div>; }
+const field = (p: any) => <input {...p} required />;
+function QuickOrder({ dishes, onSave, date }: any) { const [v, set] = useState({ date, period: '晚餐', dishIds: [], note: '', orderedBy: '小白', status: '待确认' }); return <form onSubmit={(e) => { e.preventDefault(); onSave(v); }} className='form'>{field({ type: 'date', value: v.date, onChange: (e: any) => set({ ...v, date: e.target.value }) })}<select value={v.period} onChange={(e) => set({ ...v, period: e.target.value })}>{periods.map((p) => <option key={p}>{p}</option>)}</select><select onChange={(e) => set({ ...v, dishIds: [e.target.value] })}>{dishes.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>{field({ placeholder: '备注', value: v.note, onChange: (e: any) => set({ ...v, note: e.target.value }) })}<select value={v.orderedBy} onChange={(e) => set({ ...v, orderedBy: e.target.value })}><option>小白</option><option>小鸡毛</option></select><select value={v.status} onChange={(e) => set({ ...v, status: e.target.value })}><option>待确认</option><option>已确认</option><option>已完成</option><option>已取消</option></select><button>保存</button></form>; }
+function DishForm({ dish, onSave }: any) { const [v, set] = useState(dish || { name: '', imageUrl: '', cuisine: '家常菜', description: '', tags: [], difficulty: '简单', cookTime: 30, recommended: false, frequent: false }); return <form className='form' onSubmit={(e) => { e.preventDefault(); onSave({ ...v, tags: String(v.tags).split(/[，,]/).filter(Boolean), cookTime: Number(v.cookTime) }); }}>{field({ placeholder: '菜名', value: v.name, onChange: (e: any) => set({ ...v, name: e.target.value }) })}{field({ placeholder: '图片 URL', value: v.imageUrl, onChange: (e: any) => set({ ...v, imageUrl: e.target.value }) })}<select value={v.cuisine} onChange={(e) => set({ ...v, cuisine: e.target.value })}>{cuisines.slice(1).map((c) => <option key={c}>{c}</option>)}</select>{field({ placeholder: '简介', value: v.description, onChange: (e: any) => set({ ...v, description: e.target.value }) })}{field({ placeholder: '标签（逗号分隔）', value: v.tags, onChange: (e: any) => set({ ...v, tags: e.target.value }) })}{field({ type: 'number', placeholder: '制作时间(分钟)', value: v.cookTime, onChange: (e: any) => set({ ...v, cookTime: e.target.value }) })}<button>保存菜品</button></form>; }
+function MemoryForm({ dishes, onSave }: any) { const [v, set] = useState({ dishId: '', dishName: '', imageUrl: '', review: '', chef: '小白', rating: 5, wantAgain: true }); return <form className='form' onSubmit={(e) => { e.preventDefault(); onSave(v); }}><select value={v.dishId} onChange={(e) => { const dish = dishes.find((d: any) => d.id === e.target.value); set({ ...v, dishId: e.target.value, dishName: dish?.name || '' }); }}><option value=''>关联菜品（可选）</option>{dishes.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>{field({ placeholder: '菜名', value: v.dishName, onChange: (e: any) => set({ ...v, dishName: e.target.value }) })}{field({ placeholder: '图片 URL', value: v.imageUrl, onChange: (e: any) => set({ ...v, imageUrl: e.target.value }) })}{field({ placeholder: '原始评价', value: v.review, onChange: (e: any) => set({ ...v, review: e.target.value }) })}<select value={v.chef} onChange={(e) => set({ ...v, chef: e.target.value })}><option>小白</option><option>小鸡毛</option></select>{field({ type: 'number', min: 1, max: 5, value: v.rating, onChange: (e: any) => set({ ...v, rating: Number(e.target.value) }) })}<button>生成并保存</button></form>; }
+function RestaurantForm({ onSave }: any) { const [v, set] = useState({ name: '', status: '想去', city: '', address: '', imageUrl: '', type: '', avgCost: 80, recommendedDishes: '', review: '', score: 4.5, wantAgain: true, sourcePlatform: '手动', lat: 31.2, lng: 121.4 }); return <form className='form' onSubmit={(e) => { e.preventDefault(); onSave({ ...v, avgCost: Number(v.avgCost), score: Number(v.score) }); }}><input placeholder='餐厅名称' value={v.name} onChange={(e) => set({ ...v, name: e.target.value })} required /><select value={v.status} onChange={(e) => set({ ...v, status: e.target.value })}><option>想去</option><option>已去</option></select><input placeholder='城市' value={v.city} onChange={(e) => set({ ...v, city: e.target.value })} required /><input placeholder='地址' value={v.address} onChange={(e) => set({ ...v, address: e.target.value })} required /><input placeholder='图片 URL' value={v.imageUrl} onChange={(e) => set({ ...v, imageUrl: e.target.value })} /><input placeholder='类型' value={v.type} onChange={(e) => set({ ...v, type: e.target.value })} /><button>保存餐厅</button></form>; }

@@ -1,15 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=PingFang+SC:wght@400;500;600&display=swap');
-:root{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Segoe UI',sans-serif;color:#3f2a1c;background:#faf7f2}
-*{box-sizing:border-box} body{margin:0}
-.app{max-width:640px;margin:0 auto;min-height:100vh;padding-bottom:80px;background:linear-gradient(180deg,#fffaf4,#f7efe4)}
-.header{position:sticky;top:0;backdrop-filter:blur(10px);background:rgba(255,251,245,.8);padding:14px 16px;border-bottom:1px solid #eadcc8}
-.header h1{margin:0;font-size:20px}.header p{margin:4px 0 0;color:#8a6344;font-size:13px}
-.main{padding:14px;display:grid;gap:12px}.card{background:rgba(255,255,255,.75);border:1px solid #efdfca;border-radius:16px;padding:14px;box-shadow:0 8px 20px rgba(90,60,30,.08)}
-input,select,button{width:100%;margin-top:8px;border-radius:12px;border:1px solid #e7d3bc;padding:10px;font-size:14px}
-button{background:#f8a15d;color:#fff;border:none}
-.card div{margin-top:10px;padding-top:10px;border-top:1px solid #f0e5d7}
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px;background:rgba(255,251,245,.95);border-top:1px solid #eadcc8}
-.nav button{margin:0;background:#fff3e7;color:#8a6344;padding:8px 4px;font-size:12px}.nav button.active{background:#f8a15d;color:#fff}
-
-.card h2{margin:0 0 8px;font-size:20px;color:#4f311d}
-.card p{margin:6px 0;color:#6d4a31}
+@import url('https://fonts.googleapis.com/css2?family=PingFang+SC:wght@400;500;600;700&display=swap');
+:root{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;background:#f7f1e8;color:#4f3623}*{box-sizing:border-box}body{margin:0}
+.app{max-width:640px;margin:0 auto;min-height:100vh;background:linear-gradient(180deg,#fffaf5,#f6ecdf);padding-bottom:88px}
+.header{position:sticky;top:0;padding:16px;background:rgba(255,252,246,.75);backdrop-filter:blur(12px);border-bottom:1px solid #f1dfc9;z-index:5}.header h1{margin:0}.header p{margin:6px 0 0;color:#8b6241}
+.main{padding:14px;display:grid;gap:12px}.card{background:rgba(255,255,255,.74);border:1px solid #f2e2cf;border-radius:20px;padding:14px;box-shadow:0 10px 26px rgba(109,76,43,.11)}
+.hero h2{font-size:28px;margin:4px 0}.hero p{color:#7b5a3d}.row{padding:8px 0;border-top:1px solid #f5e9db;display:grid;gap:4px}.row:first-of-type{border-top:0}
+.grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.photo img{width:100%;height:110px;object-fit:cover;border-radius:14px}.photo p{margin:8px 0 4px;font-weight:600}.photo small{color:#8f6e52}
+button,input,select{border-radius:14px;border:1px solid #ebd8c2;padding:10px 12px;background:#fff;font-size:14px}button{background:#ff9c59;color:#fff;border:none}
+.soft{background:#fff1e4;color:#8a5630;font-weight:600}.toolbar{display:flex;gap:8px;align-items:center}.toolbar input{flex:1}
+.nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:640px;padding:10px;background:rgba(255,250,243,.95);backdrop-filter:blur(12px);border-top:1px solid #f1dec8;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.nav button{margin:0;background:#fff3e6;color:#8f6647;font-size:12px}.nav .active{background:#ff9c59;color:white}
+.chips{display:flex;gap:8px;overflow:auto;padding:0 2px 8px}.chips button{background:#fff2e5;color:#926846;white-space:nowrap}.chips .activeChip{background:#ffd7b6;color:#6d3f1f}
+.actions{display:flex;gap:6px;margin-top:6px}.actions button{flex:1}
+.sheetWrap{position:fixed;inset:0;background:rgba(63,37,20,.25);display:flex;align-items:flex-end;z-index:9}.sheet{width:100%;border-bottom-left-radius:0;border-bottom-right-radius:0;max-height:88vh;overflow:auto}.form{display:grid;gap:8px}.map{height:280px;background:radial-gradient(circle at 20% 20%,#fbe6cf,#efdac1 40%,#e2c8a8);position:relative;overflow:hidden}.pin{position:absolute;border:none;background:transparent;padding:0}.pin img{width:48px;height:48px;border-radius:50%;border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+.empty{grid-column:1/-1;text-align:center;color:#8d6748;padding:28px}
