@@ -1,0 +1,6 @@
+{
+  "name": "味蕾记忆",
+  "description": "极具温情色彩的私人厨房菜单预订、美食探店足迹（含互动地图）、家庭烹饪日志（集成 Gemini 智能菜品赏析与技术改进建议）一站式美食手账应用。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

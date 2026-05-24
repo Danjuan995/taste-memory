@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=ZCOOL+XiaoWei&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Space Grotesk", "ZCOOL XiaoWei", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-cream: #FAF8F5;
+  --color-cozy-beige: #F5EFEB;
+  --color-warm-tan: #E2D4C9;
+  --color-brand-orange: #EE8F46;
+  --color-brand-orange-hover: #D77A2F;
+  --color-brand-brown: #7C4512;
+  --color-brand-dark: #3F1F04;
+}
+
+/* Custom scrollbar for modern browsers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-warm-tan);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-orange);
+}
+
+.shadow-custom-sm {
+  box-shadow: 0 2px 8px -2px rgba(63, 31, 4, 0.05), 0 1px 3px -1px rgba(63, 31, 4, 0.03);
+}
+
+.shadow-custom-md {
+  box-shadow: 0 12px 24px -8px rgba(63, 31, 4, 0.1), 0 4px 12px -4px rgba(63, 31, 4, 0.04);
+}
+
+.shadow-custom-lg {
+  box-shadow: 0 20px 40px -12px rgba(63, 31, 4, 0.15), 0 8px 20px -6px rgba(63, 31, 4, 0.06);
+}
