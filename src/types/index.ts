@@ -1,17 +1,31 @@
 export type UserName = '小白' | '小鸡毛';
 
-export type CuisineType = '家常菜' | '川湘菜' | '粤菜' | '日料' | '西餐' | '甜品' | '轻食';
+export type CuisineType =
+  | '家常菜'
+  | '川湘菜'
+  | '江浙菜'
+  | '粤菜'
+  | '西餐'
+  | '面食'
+  | '甜品'
+  | '汤羹'
+  | '早餐'
+  | '夜宵';
 
 export type MealPeriod = '早餐' | '午餐' | '晚餐' | '夜宵';
-
 export type OrderStatus = '待确认' | '已确认' | '已完成' | '已取消';
 
 export interface Dish {
   id: string;
   name: string;
+  imageUrl: string;
   cuisine: CuisineType;
   description: string;
-  imageUrl: string;
+  tags: string[];
+  difficulty: '简单' | '中等' | '进阶';
+  cookTime: number;
+  recommended: boolean;
+  frequent: boolean;
 }
 
 export interface MealOrder {
@@ -26,10 +40,13 @@ export interface MealOrder {
 
 export interface TasteMemory {
   id: string;
+  dishId?: string;
+  dishName: string;
   imageUrl: string;
   review: string;
-  dishId: string;
   chef: UserName;
+  rating: number;
+  wantAgain: boolean;
   aiTitle: string;
   aiSummary: string;
   aiTags: string[];
@@ -38,6 +55,7 @@ export interface TasteMemory {
 }
 
 export type RestaurantStatus = '想去' | '已去';
+export type SourcePlatform = '手动' | '美团' | '大众点评' | '高德';
 
 export interface Restaurant {
   id: string;
@@ -46,13 +64,16 @@ export interface Restaurant {
   city: string;
   address: string;
   imageUrl: string;
+  type: string;
   avgCost: number;
   recommendedDishes: string;
   review: string;
-  sourcePlatform: '美团' | '大众点评' | '小红书' | '朋友推荐';
+  score: number;
+  wantAgain: boolean;
+  sourcePlatform: SourcePlatform;
   lat: number;
   lng: number;
+  createdAt: string;
 }
-
 
 export type AppTab = 'home' | 'meal' | 'menu' | 'memory' | 'footprint';
