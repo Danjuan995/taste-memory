@@ -9,6 +9,7 @@ const nav = [
   { id: 'home', label: '首页', icon: House },
   { id: 'meal', label: '点菜', icon: CalendarDays },
   { id: 'menu', label: '菜单', icon: BookOpen },
+  { id: 'recipes', label: '菜谱', icon: BookOpen },
   { id: 'memory', label: '味蕾记忆', icon: Camera },
   { id: 'footprint', label: '美味足迹', icon: MapPinned },
 ] as const;
@@ -27,8 +28,8 @@ export default function App() {
   const [editingDish, setEditingDish] = useState('');
   const [editingRecipeId, setEditingRecipeId] = useState('');
   const [selectedRecipeId, setSelectedRecipeId] = useState('');
-  const [menuSubTab, setMenuSubTab] = useState<'dish' | 'recipe'>('dish');
-
+  const [prefillRecipeDishId, setPrefillRecipeDishId] = useState<string | undefined>(undefined);
+  
   const persist = (next: typeof store) => {
     setStore(next);
     storageService.saveAll(next);
@@ -41,17 +42,25 @@ export default function App() {
 
   const selectedRecipe = store.recipes.find((r) => r.id === selectedRecipeId);
 
-  const jumpToMenu = (subTab: 'dish' | 'recipe', action?: 'dish' | 'recipe') => {
+  const jumpToMenu = (action?: 'dish') => {
     setTab('menu');
-    setMenuSubTab(subTab);
     if (action === 'dish') {
       setEditingDish('');
       setOverlay('dish');
     }
-    if (action === 'recipe') {
-      setEditingRecipeId('');
-      setOverlay('recipe');
+  };
+
+  const jumpToRecipes = (dishId?: string, recipeId?: string) => {
+    setTab('recipes');
+    if (recipeId) {
+      setSelectedRecipeId(recipeId);
+      setOverlay('recipeDetail');
+      return;
     }
+    setEditingRecipeId('');
+    setSelectedRecipeId('');
+    setPrefillRecipeDishId(dishId);
+    setOverlay('recipe');
   };
 
   return <div className='shell app-shell'><div className='app'><main className='main page-content'>
@@ -67,8 +76,8 @@ export default function App() {
 
       <section><div className='secHead'><h3>快捷入口</h3></div><div className='quickGrid'>
         <button className='quickCard' onClick={() => { setTab('meal'); setOverlay('order'); }}><CalendarDays size={18} /><p>预约点菜</p><small>安排某天某一餐</small></button>
-        <button className='quickCard' onClick={() => jumpToMenu('dish', 'dish')}><UtensilsCrossed size={18} /><p>新增菜品</p><small>收录可点菜品</small></button>
-        <button className='quickCard' onClick={() => jumpToMenu('recipe', 'recipe')}><BookOpen size={18} /><p>新增菜谱</p><small>记录详细做法</small></button>
+        <button className='quickCard' onClick={() => jumpToMenu('dish')}><UtensilsCrossed size={18} /><p>新增菜品</p><small>收录可点菜品</small></button>
+        <button className='quickCard' onClick={() => jumpToRecipes()}><BookOpen size={18} /><p>新增菜谱</p><small>记录详细做法</small></button>
         <button className='quickCard' onClick={() => { setTab('memory'); setOverlay('memory'); }}><Camera size={18} /><p>记录下厨</p><small>写下体验和改进</small></button>
       </div></section>
     </section>}
@@ -83,14 +92,10 @@ export default function App() {
     {tab === 'menu' && <section className='stack page'>
       <div className='titleCard'>
         <h2>私房菜单</h2>
-        <p>管理小白和小鸡毛常吃的菜，也记录每一道菜的做法。</p>
-      </div>
-      <div className='segmented'>
-        <button className={menuSubTab === 'dish' ? 'activeSeg' : ''} onClick={() => setMenuSubTab('dish')}>菜品库</button>
-        <button className={menuSubTab === 'recipe' ? 'activeSeg' : ''} onClick={() => setMenuSubTab('recipe')}>菜谱记录</button>
+        <p>管理小白和小鸡毛常吃、想吃、值得再做的菜。</p>
       </div>
 
-      {menuSubTab === 'dish' && <>
+      <>
         <div className='menuGuide'>菜品库：管理“可以点的菜”；菜谱记录：管理“这道菜怎么做”。</div>
         <div className='searchBox'><Search size={16}/><input placeholder='搜索今天想吃的菜' value={search} onChange={(e) => setSearch(e.target.value)} /></div>
         <div className='chips'>{cuisines.map((c) => <button key={c} className={cuisine === c ? 'activeChip' : ''} onClick={() => setCuisine(c)}>{c}</button>)}</div>
@@ -101,20 +106,22 @@ export default function App() {
             <div className='cardActions'>
               <button className='tinyBtn' onClick={() => { setTab('meal'); setOverlay('order'); }}>加入点菜</button>
               <button className='tinyBtn secondaryBtn' onClick={() => {
-                if (linkedRecipe) { setSelectedRecipeId(linkedRecipe.id); setOverlay('recipeDetail'); }
-                else { setEditingRecipeId(''); setOverlay('recipe'); }
-              }}>{linkedRecipe ? '查看菜谱' : '新增菜谱'}</button>
+                if (linkedRecipe) { jumpToRecipes(d.id, linkedRecipe.id); }
+                else { jumpToRecipes(d.id); }
+              }}>{linkedRecipe ? '查看菜谱' : '去建菜谱'}</button>
             </div>
           </div></article>;
         })}</div>
-      </>}
+      </>
+    </section>}
 
-      {menuSubTab === 'recipe' && <>
-        <div className='menuGuide'>在这里记录菜谱封面、食材和步骤，做完体验请去味蕾记忆页。</div>
-        <button className='pillBtn' onClick={() => { setEditingRecipeId(''); setOverlay('recipe'); }}><Plus size={16}/> 新增菜谱</button>
-        {store.recipes.length === 0 ? <div className='empty'>还没有菜谱记录，把第一道私房菜的做法记下来吧。<button className='tinyBtn' onClick={() => setOverlay('recipe')}>新增菜谱</button></div> :
-          <div className='grid1'>{store.recipes.map((r) => <article key={r.id} className='albumCard recipeRecordCard'><img src={r.coverImageUrl || ''} alt={r.name} /><div><h4>{r.name}</h4><small>{r.cuisine} · {difficultyLabel(r.difficulty)} · {r.cookingTime}分钟 · 食材{r.ingredients.length} · 步骤{r.steps.length}</small><small>关联菜品：{store.dishes.find((d) => d.id === r.dishId)?.name || '未关联'} · 创建人：{r.createdBy === 'xiaobai' ? '小白' : '小鸡毛'}</small><small>最近更新：{r.updatedAt.slice(0, 10)}</small><div className='cardActions'><button className='tinyBtn' onClick={() => { setSelectedRecipeId(r.id); setOverlay('recipeDetail'); }}>查看菜谱</button><button className='tinyBtn secondaryBtn' onClick={() => { setEditingRecipeId(r.id); setOverlay('recipe'); }}>编辑</button><button className='tinyBtn dangerBtn' onClick={() => persist(storageService.deleteRecipe(store, r.id))}>删除</button></div></div></article>)}</div>}
-      </>}
+    {tab === 'recipes' && <section className='stack page'>
+      <div className='titleCard'><h2>私房菜谱</h2><p>把每一道菜的食材、步骤和小技巧都认真记下来。</p></div>
+      <div className='searchBox'><Search size={16}/><input placeholder='搜索菜谱名称' value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+      <div className='chips'>{cuisines.map((c) => <button key={c} className={cuisine === c ? 'activeChip' : ''} onClick={() => setCuisine(c)}>{c}</button>)}</div>
+      <button className='pillBtn' onClick={() => { setEditingRecipeId(''); setPrefillRecipeDishId(undefined); setOverlay('recipe'); }}><Plus size={16}/> 新增菜谱</button>
+      {store.recipes.filter((r) => r.name.includes(search) && (cuisine === '全部' || r.cuisine === cuisine)).length === 0 ? <div className='empty'>还没有菜谱记录，把第一道私房菜的做法记下来吧。<button className='tinyBtn' onClick={() => setOverlay('recipe')}>新增菜谱</button></div> :
+      <div className='grid1'>{store.recipes.filter((r) => r.name.includes(search) && (cuisine === '全部' || r.cuisine === cuisine)).map((r) => <article key={r.id} className='albumCard recipeRecordCard'><img src={r.coverImageUrl || ''} alt={r.name} /><div><h4>{r.name}</h4><small>关联菜品：{store.dishes.find((d) => d.id === r.dishId)?.name || '未关联'} · {r.cuisine}</small><small>{difficultyLabel(r.difficulty)} · {r.cookingTime}分钟 · 食材{r.ingredients.length} · 步骤{r.steps.length}</small><small>创建人：{r.createdBy === 'xiaobai' ? '小白' : '小鸡毛'} · 最近更新：{r.updatedAt.slice(0, 10)}</small><div className='tags'>{r.tags.map((t) => <span key={t}>{t}</span>)}</div><div className='cardActions'><button className='tinyBtn' onClick={() => { setSelectedRecipeId(r.id); setOverlay('recipeDetail'); }}>查看</button><button className='tinyBtn secondaryBtn' onClick={() => { setEditingRecipeId(r.id); setOverlay('recipe'); }}>编辑</button><button className='tinyBtn' onClick={() => { setTab('meal'); setOverlay('order'); }}>加入点菜</button><button className='tinyBtn dangerBtn' onClick={() => persist(storageService.deleteRecipe(store, r.id))}>删除</button></div></div></article>)}</div>}
     </section>}
 
     {tab === 'memory' && <section className='stack page'><div className='heroLite'><h3>味蕾记忆</h3><p>这里只记录做完后的体验、图片、总结和下次改进。</p><button className='pillBtn' onClick={() => setOverlay('memory')}>新增味蕾记忆</button></div></section>}
@@ -124,7 +131,7 @@ export default function App() {
   <footer className='nav floating-tabbar safe-bottom'>{nav.map((n) => <button key={n.id} className={tab === n.id ? 'active tap-target' : 'tap-target'} onClick={() => setTab(n.id as AppTab)}><n.icon size={17}/><span>{n.label}</span></button>)}</footer>
   {overlay === 'order' && <Sheet title='新增点菜预约' close={() => setOverlay('')}><QuickOrder onSave={(data: Omit<typeof store.orders[number], 'id'>) => { persist(storageService.addOrder(store, data)); setOverlay(''); }} dishes={store.dishes} date={date} identity={identity} /></Sheet>}
   {overlay === 'dish' && <Sheet title={editingDish ? '编辑菜品' : '新增菜品'} close={() => setOverlay('')}><DishForm dish={store.dishes.find((d) => d.id === editingDish)} onSave={(data: Omit<Dish, 'id'>) => { persist(editingDish ? storageService.updateDish(store, editingDish, data) : storageService.addDish(store, data)); setOverlay(''); }} /></Sheet>}
-  {overlay === 'recipe' && <Sheet title={editingRecipeId ? '编辑菜谱' : '新增菜谱'} close={() => setOverlay('')}><RecipeForm recipe={store.recipes.find((r) => r.id === editingRecipeId)} dishes={store.dishes} identity={identity} onSave={(v: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => { persist(editingRecipeId ? storageService.updateRecipe(store, editingRecipeId, v) : storageService.addRecipe(store, v)); setOverlay(''); }} /></Sheet>}
+  {overlay === 'recipe' && <Sheet title={editingRecipeId ? '编辑菜谱' : '新增菜谱'} close={() => setOverlay('')}><RecipeForm recipe={store.recipes.find((r) => r.id === editingRecipeId)} dishes={store.dishes} identity={identity} prefillDishId={prefillRecipeDishId} onSave={(v: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => { persist(editingRecipeId ? storageService.updateRecipe(store, editingRecipeId, v) : storageService.addRecipe(store, v)); setOverlay(''); }} /></Sheet>}
   {overlay === 'recipeDetail' && selectedRecipe && <Sheet title='菜谱详情' close={() => setOverlay('')}><RecipeDetail recipe={selectedRecipe} dish={store.dishes.find((d) => d.id === selectedRecipe.dishId)} onEdit={() => { setEditingRecipeId(selectedRecipe.id); setOverlay('recipe'); }} onAddMeal={() => { setTab('meal'); setOverlay('order'); }} /></Sheet>}
   {overlay === 'memory' && <Sheet title='新增味蕾记忆' close={() => setOverlay('')}><MemoryForm dishes={store.dishes} onSave={(v: { dishId?: string; dishName: string; imageUrl: string; review: string; chef: UserName; rating: number; wantAgain: boolean }) => { const ai = aiService.summarizeTaste(v.review, v.dishName); persist(storageService.addMemory(store, { ...v, aiTitle: ai.title, aiSummary: ai.summary, aiTags: ai.tags, aiSuggestion: ai.suggestion })); setOverlay(''); }} /></Sheet>}
 </div></div>;
@@ -141,7 +148,7 @@ function QuickOrder({ dishes, onSave, date, identity }: { dishes: Dish[]; onSave
 
 function DishForm({ dish, onSave }: { dish?: Dish; onSave: (v: Omit<Dish, 'id'>) => void }) { const [v, set] = useState<Omit<Dish, 'id'>>(dish || { name: '', imageUrl: '', cuisine: '家常菜', description: '', tags: [], difficulty: '简单', cookTime: 30, recommended: false, frequent: false }); return <form className='form' onSubmit={(e) => { e.preventDefault(); onSave({ ...v, tags: String(v.tags).split(/[，,]/).filter(Boolean), cookTime: Number(v.cookTime) }); }}>{field({ placeholder: '菜名', value: v.name, onChange: (e) => set({ ...v, name: e.currentTarget.value }) })}{field({ placeholder: '图片 URL', value: v.imageUrl, onChange: (e) => set({ ...v, imageUrl: e.currentTarget.value }) })}<select className='niceInput' value={v.cuisine} onChange={(e) => set({ ...v, cuisine: e.currentTarget.value as CuisineType })}>{cuisines.slice(1).map((c) => <option key={c}>{c}</option>)}</select>{field({ placeholder: '简介', value: v.description, onChange: (e) => set({ ...v, description: e.currentTarget.value }) })}{field({ placeholder: '标签（逗号分隔）', value: String(v.tags), onChange: (e) => set({ ...v, tags: e.currentTarget.value.split(/[，,]/).filter(Boolean) }) })}{field({ type: 'number', placeholder: '制作时间(分钟)', value: v.cookTime, onChange: (e) => set({ ...v, cookTime: Number(e.currentTarget.value) }) })}<button className='pillBtn'>保存菜品</button></form>; }
 
-function RecipeForm({ recipe, dishes, identity, onSave }: { recipe?: Recipe; dishes: Dish[]; identity: UserName; onSave: (v: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => void }) {
+function RecipeForm({ recipe, dishes, identity, prefillDishId, onSave }: { recipe?: Recipe; dishes: Dish[]; identity: UserName; prefillDishId?: string; onSave: (v: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => void }) {
   const [v, setV] = useState<Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>>(recipe ? { ...recipe } : { name: '', coverImageUrl: '', dishId: '', cuisine: '家常菜', description: '', ingredients: [{ id: crypto.randomUUID(), name: '', amount: '', note: '' }], steps: [{ id: crypto.randomUUID(), order: 1, title: '', description: '', imageUrl: '', duration: undefined }], tips: '', difficulty: 'normal', cookingTime: 30, servings: 2, createdBy: identity === '小白' ? 'xiaobai' : 'xiaojimao', tags: [] });
   return <form className='form' onSubmit={(e) => { e.preventDefault(); onSave({ ...v, dishId: v.dishId || undefined, tags: String(v.tags).split(/[，,]/).filter(Boolean), ingredients: v.ingredients.filter((i) => i.name), steps: v.steps.filter((s) => s.description).map((s, idx) => ({ ...s, order: idx + 1 })) }); }}>
     <h4>基础信息</h4>{field({ placeholder: '菜谱名称', value: v.name, onChange: (e) => setV({ ...v, name: e.currentTarget.value }) })}

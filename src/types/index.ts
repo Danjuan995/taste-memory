@@ -113,4 +113,4 @@ export interface Restaurant {
   createdAt: string;
 }
 
-export type AppTab = 'home' | 'meal' | 'menu' | 'memory' | 'footprint';
+export type AppTab = 'home' | 'meal' | 'menu' | 'recipes' | 'memory' | 'footprint';
