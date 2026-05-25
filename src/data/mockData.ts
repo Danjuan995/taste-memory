@@ -17,5 +17,5 @@ export const mockRecipes: Recipe[] = [
 ];
 
 export const mockOrders: MealOrder[] = [];
-export const mockTasteMemories: TasteMemory[] = [];
+export const mockTasteMemories: TasteMemory[] = [{ id: 'm1', dishId: 'd1', dishName: '番茄牛腩', imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=1000&auto=format&fit=crop&q=80', chef: '小白', rating: 5, experience: '汤汁浓郁，拌饭非常满足。', review: '牛腩软烂，番茄酸甜平衡。', message: '下次想加一点黑胡椒。', wantAgain: true, tags: ['暖胃', '周末'], aiTitle: '周末慢炖番茄牛腩', aiSummary: '浓郁好吃', aiTags: ['家常', '慢炖'], aiSuggestion: '下次可加入土豆', createdAt: now }];
 export const mockRestaurants: Restaurant[] = [];

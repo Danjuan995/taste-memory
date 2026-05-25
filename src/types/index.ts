@@ -43,9 +43,15 @@ export interface TasteMemory {
   dishId?: string;
   dishName: string;
   imageUrl: string;
-  review: string;
+  review?: string;
+  experience?: string;
+  comment?: string;
+  message?: string;
+  note?: string;
+  tags?: string[];
+  title?: string;
   chef: UserName;
-  rating: number;
+  rating?: number;
   wantAgain: boolean;
   aiTitle: string;
   aiSummary: string;
@@ -113,4 +119,4 @@ export interface Restaurant {
   createdAt: string;
 }
 
-export type AppTab = 'home' | 'meal' | 'menu' | 'recipes' | 'memory' | 'footprint';
+export type AppTab = 'home' | 'meal' | 'menu' | 'recipes' | 'footprint';
