@@ -1,5 +1,6 @@
 import { mockDishes, mockOrders, mockRecipes, mockRestaurants, mockTasteMemories } from '../data/mockData';
 import { Dish, MealOrder, Recipe, Restaurant, TasteMemory } from '../types/index';
+import { createId } from '../utils/createId';
 
 const KEY = 'taste_memory_v3';
 
@@ -13,7 +14,7 @@ export interface StoreData {
 
 const fallback: StoreData = { dishes: mockDishes, orders: mockOrders, memories: mockTasteMemories, restaurants: mockRestaurants, recipes: mockRecipes };
 
-const withId = <T extends object>(item: Omit<T, 'id'>): T => ({ ...item, id: crypto.randomUUID() } as T);
+const withId = <T extends object>(item: Omit<T, 'id'>): T => ({ ...item, id: createId('entity') } as T);
 
 export const storageService = {
   loadAll(): StoreData {
