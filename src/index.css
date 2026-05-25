@@ -113,6 +113,7 @@ textarea { min-height: 96px; resize: vertical; }
 .grid1 { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .cardActions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .groupCard { border: 1px solid var(--line-soft); border-radius: 14px; background: #fffaf2; padding: 10px; display: grid; gap: 8px; }
+.errorText { color: #9f4f3c; background: #fbe7df; border: 1px solid rgba(159,79,60,.18); padding: 8px 10px; border-radius: 10px; margin: 0; }
 .recipeDetail .detailCover { border-radius: 18px; aspect-ratio: 16/9; margin-bottom: 8px; }
 .ingredients, .steps { display: grid; gap: 8px; }
 .ingredientItem { border: 1px solid var(--line-soft); background: #fff8ee; border-radius: 12px; padding: 10px; display: grid; }
