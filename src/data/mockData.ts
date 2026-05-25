@@ -1,22 +1,21 @@
-import { Dish, MealOrder, Restaurant, TasteMemory } from '../types/index';
+import { Dish, MealOrder, Recipe, Restaurant, TasteMemory } from '../types/index';
 
 export const APP_NAME = '小白和小鸡毛的私房菜';
 export const APP_SUBTITLE = '记录小白和小鸡毛的私房菜日常，把每一餐都认真留下来。';
 
 export const mockDishes: Dish[] = [
   { id: 'd1', name: '番茄牛腩', imageUrl: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=1000&auto=format&fit=crop&q=80', cuisine: '家常菜', description: '酸甜开胃，周末慢炖。', tags: ['暖胃', '周末'], difficulty: '中等', cookTime: 60, recommended: true, frequent: true },
-  { id: 'd2', name: '椒麻鸡丝面', imageUrl: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=1000&auto=format&fit=crop&q=80', cuisine: '面食', description: '麻香清爽，夜宵友好。', tags: ['微辣', '夜宵'], difficulty: '简单', cookTime: 25, recommended: true, frequent: false },
-  { id: 'd3', name: '奶油蘑菇意面', imageUrl: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=1000&auto=format&fit=crop&q=80', cuisine: '西餐', description: '奶香浓郁，适合纪念日。', tags: ['约会', '奶香'], difficulty: '简单', cookTime: 30, recommended: false, frequent: false },
-  { id: 'd4', name: '椰香芒果布丁', imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=1000&auto=format&fit=crop&q=80', cuisine: '甜品', description: '清甜柔滑，饭后幸福感拉满。', tags: ['甜品', '夏日'], difficulty: '简单', cookTime: 20, recommended: true, frequent: false },
-  { id: 'd5', name: '菌菇豆腐汤', imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=1000&auto=format&fit=crop&q=80', cuisine: '汤羹', description: '清爽鲜香，晚上喝也没负担。', tags: ['轻食', '家常'], difficulty: '简单', cookTime: 18, recommended: false, frequent: true }
+  { id: 'd2', name: '葱油拌面', imageUrl: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=1000&auto=format&fit=crop&q=80', cuisine: '面食', description: '麻香清爽，夜宵友好。', tags: ['微辣', '夜宵'], difficulty: '简单', cookTime: 25, recommended: true, frequent: false },
+  { id: 'd3', name: '玉米排骨汤', imageUrl: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=1000&auto=format&fit=crop&q=80', cuisine: '汤羹', description: '清甜暖胃，适合全家。', tags: ['清甜', '家常'], difficulty: '简单', cookTime: 70, recommended: true, frequent: true },
+];
+
+const now = new Date().toISOString();
+export const mockRecipes: Recipe[] = [
+  { id: 'rp1', dishId: 'd1', name: '番茄牛腩', coverImageUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=1000&auto=format&fit=crop&q=80', cuisine: '家常菜', description: '酸甜浓郁、汤汁拌饭很香。', ingredients: [{ id: 'i1', name: '牛腩', amount: '500g' }, { id: 'i2', name: '番茄', amount: '3个' }, { id: 'i3', name: '洋葱', amount: '半个' }, { id: 'i4', name: '土豆', amount: '1个' }, { id: 'i5', name: '番茄膏', amount: '1勺' }], steps: [{ id: 's1', order: 1, title: '焯水', description: '牛腩冷水下锅焯水去血沫。', duration: 8 }, { id: 's2', order: 2, title: '炒香', description: '洋葱和番茄炒软，加入番茄膏。', duration: 10 }, { id: 's3', order: 3, title: '炖煮', description: '加入牛腩和热水，小火慢炖。', duration: 60 }, { id: 's4', order: 4, title: '收汁', description: '放土豆再炖至软烂后收汁。', duration: 15 }], tips: '番茄要炒到出沙，汤会更浓。', difficulty: 'normal', cookingTime: 90, servings: 2, createdBy: 'xiaobai', tags: ['暖胃', '浓郁', '家常'], createdAt: now, updatedAt: now },
+  { id: 'rp2', dishId: 'd2', name: '葱油拌面', coverImageUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=1000&auto=format&fit=crop&q=80', cuisine: '面食', description: '十几分钟就能完成的快手满足。', ingredients: [{ id: 'i21', name: '面条', amount: '2人份' }, { id: 'i22', name: '小葱', amount: '1把' }, { id: 'i23', name: '生抽', amount: '2勺' }, { id: 'i24', name: '老抽', amount: '半勺' }, { id: 'i25', name: '糖', amount: '1小勺' }], steps: [{ id: 's21', order: 1, title: '熬葱油', description: '小火把葱段炸到焦黄。', duration: 8 }, { id: 's22', order: 2, title: '调酱汁', description: '生抽老抽糖加少量面汤调匀。', duration: 3 }, { id: 's23', order: 3, title: '煮面', description: '面条煮到弹牙后捞出。', duration: 6 }, { id: 's24', order: 4, title: '拌匀', description: '葱油和酱汁拌面，撒葱花。', duration: 2 }], tips: '葱油一定要小火慢熬，避免发苦。', difficulty: 'easy', cookingTime: 20, servings: 2, createdBy: 'xiaojimao', tags: ['快手', '夜宵', '香'], createdAt: now, updatedAt: now },
+  { id: 'rp3', dishId: 'd3', name: '玉米排骨汤', coverImageUrl: 'https://images.unsplash.com/photo-1582450871972-ab5ca7973fda?w=1000&auto=format&fit=crop&q=80', cuisine: '汤羹', description: '清甜解腻，四季都适合。', ingredients: [{ id: 'i31', name: '排骨', amount: '500g' }, { id: 'i32', name: '玉米', amount: '1根' }, { id: 'i33', name: '胡萝卜', amount: '1根' }, { id: 'i34', name: '姜片', amount: '4片' }], steps: [{ id: 's31', order: 1, title: '焯水', description: '排骨焯水后冲净。', duration: 8 }, { id: 's32', order: 2, title: '炖汤', description: '排骨与玉米胡萝卜加足量水炖煮。', duration: 70 }, { id: 's33', order: 3, title: '调味', description: '出锅前加盐即可。', duration: 2 }], tips: '加一颗红枣会更甜润。', difficulty: 'easy', cookingTime: 80, servings: 3, createdBy: 'xiaobai', tags: ['清甜', '汤羹', '家常'], createdAt: now, updatedAt: now },
 ];
 
 export const mockOrders: MealOrder[] = [];
-export const mockTasteMemories: TasteMemory[] = [
-  { id: 'm1', dishId: 'd1', dishName: '番茄牛腩', imageUrl: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=1000&auto=format&fit=crop&q=80', review: '牛腩炖得很软，番茄味层次更好了。', aiTitle: '微酸浓香的一锅安心感', aiSummary: '今天这道番茄牛腩更偏家常温暖风，酸甜平衡、汤汁浓郁，适合拌饭。', aiTags: ['暖胃', '家常', '下饭'], aiSuggestion: '下次可以加一点胡萝卜块，口感会更丰富。', chef: '小白', rating: 5, wantAgain: true, createdAt: new Date().toISOString() }
-];
-
-export const mockRestaurants: Restaurant[] = [
-  { id: 'r1', name: '暮色 Bistro', status: '已去', city: '上海', address: '徐汇区泰康路 210 号', imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1000&auto=format&fit=crop&q=80', type: '西餐', avgCost: 220, recommendedDishes: '惠灵顿牛排、鹅肝', review: '氛围很浪漫，适合纪念日。', score: 4.6, wantAgain: true, sourcePlatform: '大众点评', lat: 31.206, lng: 121.465, createdAt: new Date().toISOString() },
-  { id: 'r2', name: '半山汤屋', status: '想去', city: '杭州', address: '西湖区龙井路 98 号', imageUrl: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1000&auto=format&fit=crop&q=80', type: '汤锅', avgCost: 148, recommendedDishes: '菌菇汤、牛肉丸', review: '木质庭院很舒服，汤底清甜。', score: 4.4, wantAgain: true, sourcePlatform: '手动', lat: 30.25, lng: 120.13, createdAt: new Date().toISOString() }
-];
+export const mockTasteMemories: TasteMemory[] = [];
+export const mockRestaurants: Restaurant[] = [];

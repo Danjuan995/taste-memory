@@ -54,6 +54,43 @@ export interface TasteMemory {
   createdAt: string;
 }
 
+export type RecipeDifficulty = 'easy' | 'normal' | 'hard';
+
+export type RecipeIngredient = {
+  id: string;
+  name: string;
+  amount?: string;
+  note?: string;
+};
+
+export type RecipeStep = {
+  id: string;
+  order: number;
+  title?: string;
+  description: string;
+  imageUrl?: string;
+  duration?: number;
+};
+
+export type Recipe = {
+  id: string;
+  dishId?: string;
+  name: string;
+  coverImageUrl?: string;
+  cuisine: CuisineType;
+  description?: string;
+  ingredients: RecipeIngredient[];
+  steps: RecipeStep[];
+  tips?: string;
+  difficulty: RecipeDifficulty;
+  cookingTime: number;
+  servings?: number;
+  createdBy: 'xiaobai' | 'xiaojimao';
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type RestaurantStatus = '想去' | '已去';
 export type SourcePlatform = '手动' | '美团' | '大众点评' | '高德';
 

@@ -1,5 +1,5 @@
-import { mockDishes, mockOrders, mockRestaurants, mockTasteMemories } from '../data/mockData';
-import { Dish, MealOrder, Restaurant, TasteMemory } from '../types/index';
+import { mockDishes, mockOrders, mockRecipes, mockRestaurants, mockTasteMemories } from '../data/mockData';
+import { Dish, MealOrder, Recipe, Restaurant, TasteMemory } from '../types/index';
 
 const KEY = 'taste_memory_v3';
 
@@ -8,9 +8,10 @@ export interface StoreData {
   orders: MealOrder[];
   memories: TasteMemory[];
   restaurants: Restaurant[];
+  recipes: Recipe[];
 }
 
-const fallback: StoreData = { dishes: mockDishes, orders: mockOrders, memories: mockTasteMemories, restaurants: mockRestaurants };
+const fallback: StoreData = { dishes: mockDishes, orders: mockOrders, memories: mockTasteMemories, restaurants: mockRestaurants, recipes: mockRecipes };
 
 const withId = <T extends object>(item: Omit<T, 'id'>): T => ({ ...item, id: crypto.randomUUID() } as T);
 
@@ -18,7 +19,12 @@ export const storageService = {
   loadAll(): StoreData {
     const raw = localStorage.getItem(KEY);
     if (!raw) return fallback;
-    try { return { ...fallback, ...JSON.parse(raw) }; } catch { return fallback; }
+    try {
+      const parsed = JSON.parse(raw);
+      return { ...fallback, ...parsed, recipes: parsed.recipes ?? [] };
+    } catch {
+      return fallback;
+    }
   },
   saveAll(data: StoreData) { localStorage.setItem(KEY, JSON.stringify(data)); },
   addDish(data: StoreData, dish: Omit<Dish, 'id'>) { return { ...data, dishes: [withId<Dish>(dish), ...data.dishes] }; },
@@ -28,5 +34,12 @@ export const storageService = {
   updateOrder(data: StoreData, id: string, patch: Partial<MealOrder>) { return { ...data, orders: data.orders.map((o) => o.id === id ? { ...o, ...patch } : o) }; },
   addMemory(data: StoreData, memory: Omit<TasteMemory, 'id' | 'createdAt'>) { return { ...data, memories: [{ ...withId<TasteMemory>({ ...memory, createdAt: new Date().toISOString() } as Omit<TasteMemory, 'id'>) }, ...data.memories] }; },
   addRestaurant(data: StoreData, restaurant: Omit<Restaurant, 'id' | 'createdAt'>) { return { ...data, restaurants: [{ ...withId<Restaurant>({ ...restaurant, createdAt: new Date().toISOString() } as Omit<Restaurant, 'id'>) }, ...data.restaurants] }; },
-  updateRestaurant(data: StoreData, id: string, patch: Partial<Restaurant>) { return { ...data, restaurants: data.restaurants.map((r) => r.id === id ? { ...r, ...patch } : r) }; }
+  updateRestaurant(data: StoreData, id: string, patch: Partial<Restaurant>) { return { ...data, restaurants: data.restaurants.map((r) => r.id === id ? { ...r, ...patch } : r) }; },
+  addRecipe(data: StoreData, recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) {
+    const now = new Date().toISOString();
+    return { ...data, recipes: [{ ...withId<Recipe>({ ...recipe, createdAt: now, updatedAt: now } as Omit<Recipe, 'id'>) }, ...data.recipes] };
+  },
+  updateRecipe(data: StoreData, id: string, patch: Partial<Recipe>) { return { ...data, recipes: data.recipes.map((r) => r.id === id ? { ...r, ...patch, updatedAt: new Date().toISOString() } : r) }; },
+  deleteRecipe(data: StoreData, id: string) { return { ...data, recipes: data.recipes.filter((r) => r.id !== id) }; },
+  findRecipeByDishId(data: StoreData, dishId: string) { return data.recipes.find((r) => r.dishId === dishId); },
 };
