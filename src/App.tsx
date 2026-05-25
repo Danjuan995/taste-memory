@@ -1,5 +1,5 @@
 import { FormEvent, InputHTMLAttributes, ReactNode, useMemo, useState } from 'react';
-import { BadgeCheck, BookOpen, CalendarDays, House, MapPinned, Plus, Search, SoupIcon, UtensilsCrossed } from 'lucide-react';
+import { BadgeCheck, BookOpen, CalendarDays, Clock3, House, MapPinned, Plus, Search, SoupIcon, UtensilsCrossed } from 'lucide-react';
 import { APP_NAME } from './data/mockData';
 import { aiService } from './services/aiService';
 import { storageService } from './services/storageService';
@@ -29,6 +29,8 @@ export default function App() {
   const persist = (next: typeof store) => { setStore(next); storageService.saveAll(next); };
   const dishes = useMemo(() => store.dishes.filter((d) => d.name.includes(search) && (cuisine === '全部' || d.cuisine === cuisine)), [store.dishes, search, cuisine]);
   const memories = useMemo(() => [...store.memories].sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [store.memories]);
+  const todayOrders = useMemo(() => store.orders.filter((order) => order.date === date), [store.orders, date]);
+  const inspirationDishes = useMemo(() => store.dishes.slice(0, 8), [store.dishes]);
 
   return <div className='shell app-shell'><div className='app'><main className='main page-content'>
     {tab === 'home' && <section className='stack page'>
@@ -36,7 +38,41 @@ export default function App() {
         <div className='brandMark'><div className='brandDot'><SoupIcon size={16} /></div><div><h1>{APP_NAME}</h1><p className='sub'>把每一次下厨的味道都认真留下来。</p></div></div>
         <button className='identityCapsule' onClick={() => setIdentity(identity === '小白' ? '小鸡毛' : '小白')}><span className='identityAvatar'>{identity[0]}</span><b>{identity}</b></button>
       </div>
-      <section className='card memoryEntry'><div><h3>味蕾记忆</h3><p>做过什么、吃起来怎么样、下次还想不想吃，都留在这里。</p></div><button className='pillBtn' onClick={() => setOverlay('memory')}><Plus size={16}/>记录今天的味道</button></section>
+      <section className='hero card'>
+        <span className='heroTag'>今天想吃点什么？</span>
+        <h2>把每一餐都安排成心动时刻</h2>
+        <p>先看看今日灵感，再给早餐、午餐、晚餐和夜宵安排起来。</p>
+        <div className='heroActions'><button onClick={() => setTab('menu')}>去挑菜单</button><button className='ghost' onClick={() => setOverlay('order')}>马上点菜</button></div>
+      </section>
+      <section className='stack'>
+        <div className='secHead'><h3>今日灵感</h3></div>
+        <div className='hScroll'>{inspirationDishes.map((dish) => <article key={dish.id} className='discoverCard'>
+          <img src={dish.imageUrl || fallbackImage} alt={dish.name} />
+          <p>{dish.name}</p>
+          <small>{dish.cuisine} · {dish.cookTime}分钟</small>
+          <div className='tags'>{dish.tags?.slice(0, 2).map((tag) => <span key={tag}>{tag}</span>)}</div>
+          <button className='tinyBtn'>加入点菜</button>
+        </article>)}</div>
+      </section>
+      <section className='stack'>
+        <div className='secHead'><h3>今日点菜</h3></div>
+        <div className='mealGrid'>{periods.map((period) => {
+          const periodOrder = todayOrders.find((order) => order.period === period);
+          return <button key={period} className='mealCard' onClick={() => { setTab('meal'); setOverlay('order'); }}>
+            <div className='mealHead'><Clock3 size={14} /><span>{period}</span></div>
+            {periodOrder ? <>
+              <span className='tag ok'>{periodOrder.status}</span>
+              <b>{periodOrder.dishIds.map((id) => store.dishes.find((dish) => dish.id === id)?.name).filter(Boolean).join('、') || '待补充菜品'}</b>
+              <small className='mealSub'>点菜人：{periodOrder.orderedBy}</small>
+            </> : <>
+              <span className='tag'>暂未安排</span>
+              <b>点击安排这餐吃什么</b>
+              <small className='mealSub'>轻点即可打开预约表单</small>
+            </>}
+          </button>;
+        })}</div>
+      </section>
+      <section className='card memoryEntry'><div><h3>味蕾记忆</h3><p>把做过的菜、当时的味道和小留言都留下来。</p></div><button className='pillBtn' onClick={() => setOverlay('memory')}><Plus size={16}/>记录今天的味道</button></section>
       {memories.length === 0 ? <section className='empty memoryEmpty'><h3>还没有留下味蕾记忆</h3><p>记录今天做的第一道菜，把味道、评价和小留言都留在这里。</p><button className='pillBtn' onClick={() => setOverlay('memory')}>记录今天的味道</button></section> :
       <section className='memoryGrid'>{memories.map((m) => <div key={m.id}><MemoryCard memory={m} /></div>)}</section>}
     </section>}
@@ -54,8 +90,30 @@ export default function App() {
 </div></div>;
 }
 
-function MemoryCard({ memory }: { memory: TasteMemory }) { const tags = memory.aiTags?.length ? memory.aiTags : memory.tags || []; const message = memory.message || memory.note || '今天也认真做饭啦。'; const exp = memory.experience || memory.review || memory.aiSummary || '这一餐值得记录。'; const title = memory.aiTitle || memory.dishName || memory.title || '今日味道记录';
-  return <article className='memoryCard'><div className='memoryImageWrap'><img src={memory.imageUrl || fallbackImage} alt={title} /><div className='memoryBadge'>{memory.wantAgain ? '想再吃' : memory.rating ? `${memory.rating}分` : '未评分'}</div></div><div className='memoryBody'><h4>{title}</h4><small>{memory.createdAt.slice(0, 10)} · 做饭人：{memory.chef}</small><p className='memoryText'><b>体验：</b>{exp}</p><p className='memoryText'><b>评价：</b>{memory.review || memory.comment || '暂无评价'}</p><p className='memoryText'><b>留言：</b>{message}</p><div className='tags'>{tags.map((t) => <span key={t}>{t}</span>)}</div><div className='cardActions'><button className='tinyBtn secondaryBtn'>查看详情</button><button className='tinyBtn'>编辑</button></div></div></article>; }
+function MemoryCard({ memory }: { memory: TasteMemory }) {
+  const tags = memory.aiTags?.length ? memory.aiTags : memory.tags || [];
+  const title = memory.aiTitle || memory.dishName || memory.title || '今日味道记录';
+  const summaryBlocks = [
+    { title: '这次体验', value: memory.experience || memory.aiSummary || '' },
+    { title: '我们的评价', value: memory.review || memory.comment || '' },
+    { title: '小留言', value: memory.message || memory.note || '' },
+  ].filter((item) => item.value);
+
+  return <article className='memoryCard'>
+    <div className='memoryImageWrap'>
+      <img src={memory.imageUrl || fallbackImage} alt={title} />
+      <div className='memoryShade' />
+      <div className='memoryBadge'>{memory.wantAgain ? '想再吃' : memory.rating ? `${memory.rating}分` : '未评分'}</div>
+    </div>
+    <div className='memoryBody'>
+      <h4>{title}</h4>
+      <small>{memory.createdAt?.slice(0, 10) || '今天'} · 做饭人：{memory.chef || '小白'}</small>
+      <div className='memorySections'>{summaryBlocks.map((block) => <section key={block.title} className='memorySection'><label>{block.title}</label><p>{block.value}</p></section>)}</div>
+      {tags.length > 0 && <div className='tags'>{tags.map((t) => <span key={t}>{t}</span>)}</div>}
+      <div className='cardActions'><button className='tinyBtn secondaryBtn'>查看详情</button><button className='tinyBtn'>编辑</button></div>
+    </div>
+  </article>;
+}
 
 function Sheet({ title, close, children }: { title: string; close: () => void; children: ReactNode }) { return <div className='sheetWrap' onClick={close}><div className='sheet card' onClick={(e) => e.stopPropagation()}><h3>{title}</h3>{children}</div></div>; }
 const field = (p: InputHTMLAttributes<HTMLInputElement>) => <input className='niceInput' {...p} required={p.required ?? true} />;
