@@ -13,6 +13,7 @@ import {
   Search,
   Sparkles,
   Soup,
+  SoupIcon,
   Sun,
   Sunrise,
   UtensilsCrossed,
@@ -58,8 +59,11 @@ export default function App() {
   return <div className='shell app-shell'><div className='app'><main className='main page-content'>
     {tab === 'home' && <section className='stack page'>
       <div className='brandPanel'>
-        <div><h1>{APP_NAME}</h1><p className='sub'>今天也要认真吃饭</p></div>
-        <button className='idSwitch' onClick={() => setIdentity(identity === '小白' ? '小鸡毛' : '小白')}><ChefHat size={14} />{identity}</button>
+        <div className='brandMark'><div className='brandDot'><SoupIcon size={16} /></div><div><h1>{APP_NAME}</h1><p className='sub'>今天也要认真吃饭</p></div></div>
+        <div className='idGroup'>
+          <button className={identity === '小白' ? 'idSwitch active' : 'idSwitch'} onClick={() => setIdentity('小白')}>小白</button>
+          <button className={identity === '小鸡毛' ? 'idSwitch active' : 'idSwitch'} onClick={() => setIdentity('小鸡毛')}>小鸡毛</button>
+        </div>
       </div>
       <section className='hero card'>
         <div className='heroContent'><span className='heroTag'>今日推荐</span><h2>今天想吃点什么？</h2><p>把每一餐都变成小白和小鸡毛的私房菜记忆。</p>
@@ -73,12 +77,18 @@ export default function App() {
           <img src={dish?.imageUrl} alt={i.name} /><div><p>{i.name}</p><small>{i.tag} · {i.time}</small><button className='tinyBtn' onClick={() => { setTab('meal'); setOverlay('order'); }}>加入点菜</button></div>
         </article>;
       })}</div></section>
+      <section><div className='secHead'><h3>快捷入口</h3></div><div className='quickGrid'>
+        <button className='quickCard' onClick={() => { setTab('meal'); setOverlay('order'); }}><CalendarDays size={18} /><p>预约点菜</p><small>安排下一餐</small></button>
+        <button className='quickCard' onClick={() => setOverlay('dish')}><UtensilsCrossed size={18} /><p>新增菜品</p><small>收录私房菜</small></button>
+        <button className='quickCard' onClick={() => { setTab('memory'); setOverlay('memory'); }}><Camera size={18} /><p>记录下厨</p><small>写下味蕾记忆</small></button>
+        <button className='quickCard' onClick={() => { setTab('footprint'); setOverlay('restaurant'); }}><MapPinned size={18} /><p>记录探店</p><small>收藏下次想去</small></button>
+      </div></section>
 
       <section className='card'><h3>今日点菜</h3><div className='mealGrid'>{periods.map((p) => { const o = todayOrders.find((x) => x.period === p); const Icon = periodIcon[p]; return <button key={p} className='mealCard' onClick={() => { setTab('meal'); setOverlay('order'); }}><div className='mealHead'><Icon size={16} /><span>{p}</span></div><em className={o ? 'tag ok' : 'tag'}>{o ? '已安排' : '还没安排'}</em><b>{o ? o.dishIds.map((id) => store.dishes.find((d) => d.id === id)?.name).filter(Boolean).join('、') : '点击预约这餐'}</b></button>; })}</div></section>
 
       <section><div className='secHead'><h3>最近味蕾记忆</h3></div>{store.memories.length ? <div className='hScroll horizontal-scroll'>{store.memories.slice(0, 5).map((m) => <article key={m.id} className='imageCard'><img src={m.imageUrl} alt={m.aiTitle}/><div><p>{m.aiTitle}</p><small>{m.createdAt.slice(0, 10)} · {m.aiTags.slice(0, 2).join(' / ')}</small></div></article>)}</div> : <div className='empty photoEmpty'><Sparkles size={20} />还没有留下味蕾记忆，记录今天做的第一道菜吧。</div>}</section>
 
-      <section><div className='secHead'><h3>最近探店</h3></div><div className='hScroll horizontal-scroll'>{store.restaurants.map((r) => <article key={r.id} className='imageCard'><img src={r.imageUrl} alt={r.name}/><div><p>{r.name}</p><small>{r.city} · 推荐 {r.score} · {r.wantAgain ? '想再去' : '尝鲜过'}</small></div></article>)}</div></section>
+      <section><div className='secHead'><h3>最近探店</h3></div>{store.restaurants.length ? <div className='hScroll horizontal-scroll'>{store.restaurants.map((r) => <article key={r.id} className='imageCard'><img src={r.imageUrl} alt={r.name}/><div><p>{r.name}</p><small>{r.city} · 推荐 {r.score} · {r.wantAgain ? '想再去' : '尝鲜过'}</small></div></article>)}</div> : <div className='empty'><MapPinned size={20} />还没有探店记录，把下一家想吃的店加进来吧。</div>}</section>
     </section>}
 
     {tab === 'meal' && <section className='stack page'><div className='titleCard'><h2>安排下一餐</h2><p>选一道想吃的菜，约好属于我们的时间。</p></div>
